@@ -32,15 +32,7 @@ byte data_count = 97; // 'a'
 char data[64], string_end[] = "]";
 
 // Singleton instance of the radio
-RFM69 rf69(9.3);
-
-
-void setupRFM69(){
-  analogReference(INTERNAL); // 1.1V ADC reference
-  while (!rf69.init()){
-    delay(100);
-  }
-}
+RFM69 rf69(9.3); // parameter: RFM temperature calibration offset (degrees as float)
 
 int gen_Data(){
   
@@ -71,17 +63,16 @@ int gen_Data(){
 
 void setup() 
 {
+  analogReference(INTERNAL); // 1.1V ADC reference
   randomSeed(analogRead(6));
-  delay(2000);
+  delay(1000);
   
   while (!rf69.init()){
     delay(100);
   }
-  delay(1000);
   
   int packet_len = gen_Data();
   rf69.send((uint8_t*)data, packet_len, rfm_power);
-  delay(100);
 }
 
 void loop()
@@ -137,8 +128,7 @@ void loop()
     LowPower.powerDown(SLEEP_8S, ADC_OFF, BOD_OFF);
   }
   
-  if (count >= data_interval){  
-    delay(100);
+  if (count >= data_interval){
     data_count++;
 
     if(data_count > 122){
@@ -166,5 +156,5 @@ void loop()
 
 float sampleBattv() {
   // External 4:1 Divider
-  return ((float)analogRead(batt_pin)*1.1*4*2.24)/1023.0;
+  return ((float)analogRead(batt_pin)*1.1*4)/1023.0;
 }
