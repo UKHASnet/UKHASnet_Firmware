@@ -21,7 +21,7 @@ int batt_pin = 0; //ADC 0 - measure battery voltage
 
 //*************Misc Setup ****************/
 byte num_repeats = '3'; //The number of hops the message will make before stopping
-float repeat_threshold = 3.65;
+float repeat_threshold = 3.65; // The voltage at which the node will switch between repeating and zombie modes
 int zombie_mode = 1;
 float slow_freq_threshold = 3.6;
 
