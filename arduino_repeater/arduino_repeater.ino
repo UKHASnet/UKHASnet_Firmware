@@ -24,6 +24,7 @@ byte num_repeats = '3'; //The number of hops the message will make before stoppi
 float repeat_threshold = 3.65; // The voltage at which the node will switch between repeating and zombie modes
 int zombie_mode = 1;
 float slow_freq_threshold = 3.6;
+float rx_temp_offset = 5.0; // Temperature offset when in RX due to self-heating
 
 float battV=0.0;
 int n, count = 1, data_interval = 4;
@@ -46,6 +47,9 @@ int gen_Data(){
   byte rfmTemp = rf69.readTemp();
   while(rfmTemp>100) {
     rfmTemp = rf69.readTemp();
+  }
+  if(zombie_mode==0) {
+    rfmTemp-=rx_temp_offset;
   }
   
   battV = sampleBattv();
