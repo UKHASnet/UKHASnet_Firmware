@@ -11,54 +11,65 @@ based on rf22_client.pde/ino from the RF22 library
 #include "RFM69.h"
 #include "LowPower.h"
 
-//*************Node ID Setup ****************/
-char id[] = "P5";
-char location_string[] = "50.9387,-1.3979";
+//************* Node ID Setup ****************/
+char id[] = "P01";
+char location_string[] = "50.9375,-1.3982";
 uint8_t rfm_power = 20; // dBmW
 
-//*************Pin Setup ****************/
-int batt_pin = 0; //ADC 0 - measure battery voltage
+//************* Sensors ****************/
+// Battery Voltage Measurement - Also enables zombie mode
+#define ENABLE_BATTV_SENSOR // Comment out to disable, also disables zombie mode
+#define BATTV_PIN 0 //ADC 0 - Battery Voltage, scaled to 1.1V
+#define BATTV_FUDGE 0.935
+// RFM Temperature Sensor - Not very accurate and sometimes glitchy
+#define ENABLE_RFM_TEMPERATURE // Comment out to disable
+#define RX_TEMP_FUDGE 5.0 // Temperature offset when in RX due to self-heating
 
-//*************Misc Setup ****************/
+//************* Power Saving ****************/
+#ifdef ENABLE_BATTV_SENSOR
+  #define ENABLE_ZOMBIE_MODE // Comment this out to disable
+#endif
+uint8_t zombie_mode; // Stores current status: 0 - Full Repeating, 1 - Low Power shutdown, (beacon only)
+#define ZOMBIE_THRESHOLD 3.65
+
+//************* Misc Setup ****************/
 byte num_repeats = '3'; //The number of hops the message will make before stopping
-float repeat_threshold = 3.65; // The voltage at which the node will switch between repeating and zombie modes
-int zombie_mode = 1;
-float slow_freq_threshold = 3.6;
-float rx_temp_offset = 5.0; // Temperature offset when in RX due to self-heating
-
 float battV=0.0;
-int n, count = 1, data_interval = 4;
-byte data_count = 97; // 'a'
+uint8_t n, count = 1, data_interval = 10;
+uint8_t data_count = 97; // 'a'
 char data[64], string_end[] = "]";
 
 // Singleton instance of the radio
 RFM69 rf69(9.3); // parameter: RFM temperature calibration offset (degrees as float)
 
 int gen_Data(){
-  
-  byte rfmTemp = rf69.readTemp();
-  while(rfmTemp>100) {
-    rfmTemp = rf69.readTemp();
-  }
-  if(zombie_mode==0) {
-    rfmTemp-=rx_temp_offset;
+  if(data_count=='a' or data_count=='z') {
+      sprintf(data, "%c%cL%s", num_repeats, data_count, location_string);
+  } else {
+      sprintf(data, "%c%c", num_repeats, data_count);
   }
   
+  #ifdef ENABLE_RFM_TEMPERATURE
+  sprintf(data,"%sT%d",data,sampleRfmTemp());
+  #endif
+  
+  #ifdef ENABLE_BATTV_SENSOR
   battV = sampleBattv();
-  char tempStr[14]; //make buffer large enough for 7 digits
   char* battStr;
-  battStr = dtostrf(battV,7,2,tempStr);
-  // Strip leading space
+  char tempStrB[14]; //make buffer large enough for 7 digits
+  battStr = dtostrf(battV,7,2,tempStrB);
   while( (strlen(battStr) > 0) && (battStr[0] == 32) )
   {
      strcpy(battStr,&battStr[1]);
   }
-  if(data_count=='a' or data_count=='z') {
-    n=sprintf(data, "%c%cL%sT%dV%sZ%d[%s]", num_repeats, data_count, location_string, rfmTemp, battStr, zombie_mode, id);
-  } else {
-    n=sprintf(data, "%c%cT%dV%sZ%d[%s]", num_repeats, data_count, rfmTemp, battStr, zombie_mode, id);
-  }
-  return n;
+  sprintf(data,"%sV%s",data,battStr);
+  #endif
+  
+  #ifdef ENABLE_ZOMBIE_MODE
+  sprintf(data,"%sZ%d",data,zombie_mode);
+  #endif
+  
+  return sprintf(data,"%s[%s]",data,id);
 }
 
 void setup() 
@@ -73,6 +84,19 @@ void setup()
   
   int packet_len = gen_Data();
   rf69.send((uint8_t*)data, packet_len, rfm_power);
+  
+  #ifdef ENABLE_ZOMBIE_MODE
+  if(battV > ZOMBIE_THRESHOLD) {
+    rf69.setMode(RFM69_MODE_RX);
+    zombie_mode=0;
+  } else {
+    rf69.setMode(RFM69_MODE_SLEEP);
+    zombie_mode=1;
+  }
+  #else
+  rf69.setMode(RFM69_MODE_RX);
+  zombie_mode=0;
+  #endif
 }
 
 void loop()
@@ -80,8 +104,8 @@ void loop()
   count++;
   if(zombie_mode==0) {
     rf69.setMode(RFM69_MODE_RX);
-    for(int i=0;i<32;i++) {
-      LowPower.powerDown(SLEEP_250MS, ADC_OFF, BOD_OFF);
+    for(int i=0;i<64;i++) {
+      LowPower.powerDown(SLEEP_120MS, ADC_OFF, BOD_OFF);
       if(rf69.checkRx()) {
         uint8_t buf[64];
         uint8_t len = sizeof(buf);
@@ -123,6 +147,8 @@ void loop()
       }
     }
   } else {
+    // Sample Sensors here..
+    
     // Sleep for 8 seconds
     rf69.setMode(RFM69_MODE_SLEEP);
     LowPower.powerDown(SLEEP_8S, ADC_OFF, BOD_OFF);
@@ -138,23 +164,35 @@ void loop()
     int packet_len = gen_Data();
     rf69.send((uint8_t*)data, packet_len, rfm_power);
     
-    if(battV > slow_freq_threshold) {
-      data_interval = random(15, 20) + count;
-      if(battV > repeat_threshold && zombie_mode==1) {
+    data_interval = random(10, 15) + count;
+    #ifdef ENABLE_ZOMBIE_MODE
+    if(battV > ZOMBIE_THRESHOLD && zombie_mode==1) {
         rf69.setMode(RFM69_MODE_RX);
         zombie_mode=0;
-      } else if (battV < repeat_threshold && zombie_mode==0) {
+    } else if (battV < ZOMBIE_THRESHOLD && zombie_mode==0) {
         rf69.setMode(RFM69_MODE_SLEEP);
         zombie_mode=1;
-      }
     }
-    else {
-      data_interval = random(25, 30) + count;
-    }
+    #endif
   }
 }
 
+#ifdef ENABLE_RFM_TEMPERATURE
+int8_t sampleRfmTemp() {
+    int8_t rfmTemp = rf69.readTemp();
+    while(rfmTemp>100) {
+        rfmTemp = rf69.readTemp();
+    }
+    if(zombie_mode==0) {
+        rfmTemp-=RX_TEMP_FUDGE;
+    }
+    return rfmTemp;
+}
+#endif
+
+#ifdef ENABLE_BATTV_SENSOR
 float sampleBattv() {
   // External 4:1 Divider
-  return ((float)analogRead(batt_pin)*1.1*4)/1023.0;
+  return ((float)analogRead(BATTV_PIN)*1.1*4*BATTV_FUDGE)/1023.0;
 }
+#endif
