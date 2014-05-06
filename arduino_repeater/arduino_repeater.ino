@@ -11,16 +11,27 @@ based on rf22_client.pde/ino from the RF22 library
 #include "RFM69.h"
 #include "LowPower.h"
 
+#define P01
+
 //************* Node ID Setup ****************/
+#ifdef P01
 char id[] = "P01";
-char location_string[] = "50.9375,-1.3982";
+char location_string[] = "50.93753,-1.39797";
+#define BATTV_FUDGE 0.935
+#endif
+#ifdef P02
+char id[] = "P02";
+char location_string[] = "50.93879,-1.3979";
+#define BATTV_FUDGE 0.943
+#endif
+#define BEACON_INTERVAL 30
 uint8_t rfm_power = 20; // dBmW
 
 //************* Sensors ****************/
 // Battery Voltage Measurement - Also enables zombie mode
 #define ENABLE_BATTV_SENSOR // Comment out to disable, also disables zombie mode
 #define BATTV_PIN 0 //ADC 0 - Battery Voltage, scaled to 1.1V
-#define BATTV_FUDGE 0.935
+#define BATTV_FUDGE 0.943
 // RFM Temperature Sensor - Not very accurate and sometimes glitchy
 #define ENABLE_RFM_TEMPERATURE // Comment out to disable
 #define RX_TEMP_FUDGE 5.0 // Temperature offset when in RX due to self-heating
@@ -41,6 +52,26 @@ char data[64], string_end[] = "]";
 
 // Singleton instance of the radio
 RFM69 rf69(9.3); // parameter: RFM temperature calibration offset (degrees as float)
+
+#ifdef ENABLE_RFM_TEMPERATURE
+int8_t sampleRfmTemp() {
+    int8_t rfmTemp = rf69.readTemp();
+    while(rfmTemp>100) {
+        rfmTemp = rf69.readTemp();
+    }
+    if(zombie_mode==0) {
+        rfmTemp-=RX_TEMP_FUDGE;
+    }
+    return rfmTemp;
+}
+#endif
+
+#ifdef ENABLE_BATTV_SENSOR
+float sampleBattv() {
+  // External 4:1 Divider
+  return ((float)analogRead(BATTV_PIN)*1.1*4*BATTV_FUDGE)/1023.0;
+}
+#endif
 
 int gen_Data(){
   if(data_count=='a' or data_count=='z') {
@@ -164,7 +195,7 @@ void loop()
     int packet_len = gen_Data();
     rf69.send((uint8_t*)data, packet_len, rfm_power);
     
-    data_interval = random(10, 15) + count;
+    data_interval = random(BEACON_INTERVAL, BEACON_INTERVAL+10) + count;
     #ifdef ENABLE_ZOMBIE_MODE
     if(battV > ZOMBIE_THRESHOLD && zombie_mode==1) {
         rf69.setMode(RFM69_MODE_RX);
@@ -176,23 +207,3 @@ void loop()
     #endif
   }
 }
-
-#ifdef ENABLE_RFM_TEMPERATURE
-int8_t sampleRfmTemp() {
-    int8_t rfmTemp = rf69.readTemp();
-    while(rfmTemp>100) {
-        rfmTemp = rf69.readTemp();
-    }
-    if(zombie_mode==0) {
-        rfmTemp-=RX_TEMP_FUDGE;
-    }
-    return rfmTemp;
-}
-#endif
-
-#ifdef ENABLE_BATTV_SENSOR
-float sampleBattv() {
-  // External 4:1 Divider
-  return ((float)analogRead(BATTV_PIN)*1.1*4*BATTV_FUDGE)/1023.0;
-}
-#endif
