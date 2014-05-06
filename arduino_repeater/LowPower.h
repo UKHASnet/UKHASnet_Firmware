@@ -109,7 +109,7 @@ enum usb_t
 class LowPowerClass
 {
 	public:
-		#if defined (__AVR_ATmega328P__) || defined (__AVR_ATmega168__) 
+		#if defined (__AVR_ATmega328P__) || defined (__AVR_ATmega168__) || defined (__AVR_ATmega168P__) 
 			void	idle(period_t period, adc_t adc, timer2_t timer2, 
 								 timer1_t timer1, timer0_t timer0, spi_t spi,
 					       usart0_t usart0, twi_t twi);
