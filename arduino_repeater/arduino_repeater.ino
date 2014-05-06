@@ -46,7 +46,8 @@ uint8_t zombie_mode; // Stores current status: 0 - Full Repeating, 1 - Low Power
 //************* Misc Setup ****************/
 byte num_repeats = '3'; //The number of hops the message will make before stopping
 float battV=0.0;
-uint8_t n, count = 1, data_interval = 10;
+uint8_t n;
+uint32_t count = 1, data_interval = 10;
 uint8_t data_count = 97; // 'a'
 char data[64], string_end[] = "]";
 
