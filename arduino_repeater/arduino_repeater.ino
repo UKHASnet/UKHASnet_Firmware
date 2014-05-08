@@ -11,7 +11,7 @@ based on rf22_client.pde/ino from the RF22 library
 #include "RFM69.h"
 #include "LowPower.h"
 
-#define P01
+#define P5
 
 //************* Node ID Setup ****************/
 #ifdef P01
@@ -21,7 +21,12 @@ char location_string[] = "50.93753,-1.39797";
 #endif
 #ifdef P02
 char id[] = "P02";
-char location_string[] = "50.93879,-1.3979";
+char location_string[] = "50.93623,-1.39876";
+#define BATTV_FUDGE 0.943
+#endif
+#ifdef P5
+char id[] = "P5";
+char location_string[] = "50.93897,-1.39774";
 #define BATTV_FUDGE 0.943
 #endif
 #define BEACON_INTERVAL 30
