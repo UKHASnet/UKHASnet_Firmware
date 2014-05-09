@@ -1,7 +1,8 @@
 /*
-UKHASnet rf69_repeater code
 
-based on rf22_client.pde/ino from the RF22 library
+UKHASnet Dumb-Sensor Code by Phil Crump M0DNY
+
+Based on UKHASnet rf69_repeater by James Coxon M6JCX
 
 */
 
