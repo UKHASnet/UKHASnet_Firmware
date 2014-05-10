@@ -24,7 +24,7 @@ char id[] = "PB1";
 #define BATTV_FUDGE 1.098
 #endif
 #define BEACON_INTERVAL 20
-uint8_t rfm_power = 20; // dBmW
+uint8_t rfm_power = 10; // dBmW
 
 //************* Sensors ****************/
 // Battery Voltage Measurement - Also enables zombie mode
@@ -46,8 +46,8 @@ OneWire ow(9);  // on pin PB1 (arduino: 9)
 DallasTemperature sensors(&ow);
 
 uint8_t buf[60]; 
-uint8_t lock =0, sats = 0, nolock=0;
-int GPSerror = 0,navmode = 0,psm_status = 0,lat_int=0,lon_int=0;
+uint8_t lock =0, sats = 0, nolock=0, psm_status = 0;
+int16_t GPSerror = 0,navmode = 0,lat_int=0,lon_int=0;
 int32_t lat = 0, lon = 0, alt = 0, maxalt = 0, lat_dec = 0, lon_dec =0 ,tslf=0;
 
 #ifdef ENABLE_BATTV_SENSOR
@@ -91,7 +91,7 @@ int gen_Data(){
     nolock=0;
   }
   
-  sprintf(data,"%sL%s%i.%05d,%s%i.%05d,%ldS%d",data,lat < 0 ? "-" : "",lat_int,lat_dec,lon < 0 ? "-" : "",lon_int,lon_dec,maxalt,sats);
+  sprintf(data,"%sL%s%d.%05ld,%s%d.%05ld,%ldS%d",data,lat < 0 ? "-" : "",lat_int,lat_dec,lon < 0 ? "-" : "",lon_int,lon_dec,maxalt,sats);
   
   sensors.setWaitForConversion(false);
   sensors.requestTemperatures();
