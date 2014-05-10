@@ -439,9 +439,9 @@ void gps_get_position()
     }
     // 4 bytes of latitude/longitude (1e-7)
     lon_int=abs(lon/10000000);
-    lon_dec=(labs(lon) % 10000000)/10;
+    lon_dec=(labs(lon) % 10000000)/100;
     lat_int=abs(lat/10000000);
-    lat_dec=(labs(lat) % 10000000)/10;
+    lat_dec=(labs(lat) % 10000000)/100;
     lat/=100;
     lon/=100;
 
