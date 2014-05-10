@@ -91,21 +91,7 @@ int gen_Data(){
     nolock=0;
   }
   
-  char* latStr;
-  char tempStrLat[18];
-  latStr = dtostrf(lat,9,5,tempStrLat);
-  while( (strlen(latStr) > 0) && (latStr[0] == 32) )
-  {
-     strcpy(latStr,&latStr[1]);
-  }
-  char* lonStr;
-  char tempStrLon[18];
-  lonStr = dtostrf(lon,9,5,tempStrLon);
-  while( (strlen(lonStr) > 0) && (lonStr[0] == 32) )
-  {
-     strcpy(lonStr,&lonStr[1]);
-  }
-  sprintf(data,"%sL%s,%sS%d",data,latStr,lonStr,sats);
+  sprintf(data,"%sL%s%i.%05d,%s%i.%05d,%ldS%d",data,lat < 0 ? "-" : "",lat_int,lat_dec,lon < 0 ? "-" : "",lon_int,lon_dec,maxalt,sats);
   
   sensors.setWaitForConversion(false);
   sensors.requestTemperatures();
