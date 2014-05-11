@@ -47,8 +47,8 @@ DallasTemperature sensors(&ow);
 
 uint8_t buf[60]; 
 uint8_t lock =0, sats = 0, nolock=0, psm_status = 0;
-int16_t GPSerror = 0,navmode = 0,lat_int=0,lon_int=0;
-int32_t lat = 0, lon = 0, alt = 0, lat_dec = 0, lon_dec =0 ,tslf=0;
+int16_t GPSerror = 0,lat_int=0,lon_int=0;
+int32_t lat = 0, lon = 0, alt = 0, lat_dec = 0, lon_dec =0;
 
 #ifdef ENABLE_BATTV_SENSOR
 float sampleBattv() {
@@ -296,31 +296,6 @@ uint16_t gps_CRC16_checksum (char *string)
   }
 
   return crc;
-}
-uint8_t gps_check_nav(void)
-{
-  uint8_t request[8] = {
-    0xB5, 0x62, 0x06, 0x24, 0x00, 0x00, 0x2A, 0x84 };
-  sendUBX(request, 8);
-
-  // Get the message back from the GPS
-  gps_get_data();
-
-  // Verify sync and header bytes
-  if( buf[0] != 0xB5 || buf[1] != 0x62 ){
-    GPSerror = 41;
-  }
-  if( buf[2] != 0x06 || buf[3] != 0x24 ){
-    GPSerror = 42;
-  }
-  // Check 40 bytes of message checksum
-  if( !_gps_verify_checksum(&buf[2], 40) ) {
-    GPSerror = 43;
-  }
-
-
-  // Return the navigation mode and let the caller analyse it
-  navmode = buf[8];
 }
 void gps_get_data()
 {
