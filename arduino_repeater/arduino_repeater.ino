@@ -140,47 +140,44 @@ void setup()
 void loop()
 {
   count++;
+  
   if(zombie_mode==0) {
     rf69.setMode(RFM69_MODE_RX);
+    
     for(int i=0;i<64;i++) {
       LowPower.powerDown(SLEEP_120MS, ADC_OFF, BOD_OFF);
-      if(rf69.checkRx()) {
+      
+      if (rf69.checkRx()) {
         uint8_t buf[64];
         uint8_t len = sizeof(buf);
-        rf69.recv(buf, &len);
         
+        rf69.recv(buf, &len);
+
+        // find end of packet & start of repeaters
+        int end_bracket = -1, start_bracket = -1;        
         for (int i=0; i<len; i++) {
-          if (buf[i] == ']') {
+          if (buf[i] == '[') {
+            start_bracket = i;
+          }
+          else if (buf[i] == ']') {
+            end_bracket = i;
             buf[i+1] = '\0';
+            break;
           }
         }
-        
+
         // Need to take the recieved buffer and decode it and add a reference 
-        if (buf[0] > '0') {
-          //Reduce the repeat value
-          buf[0] = buf[0] - 1;
-          //Add the repeater ID
-          //First find "]"
-          for (int i=0; i<len; i++) {
-            if (buf[i] == ']') {
-              buf[i] = ',';
-              buf[i+1] = '\0';
-              
-              strcpy(data, (char*)buf); //first copy buf to data (bytes to char)
-  
-              if(strstr(data, id) == 0) {
-                int packet_len = sprintf(data, "%s%s]", data, id);
-                
-                packet_len = strlen(data);
-                //random delay to try and avoid packet collision
-                delay(random(50, 800));
-                rf69.send((uint8_t*)data, packet_len, rfm_power);
-                break;
-              } else {
-                break;
-              }
-            }
-          }
+        if (buf[0] > '0' && end_bracket != -1 && strstr((const char *)&buf[start_bracket], id) == NULL) {
+          // Reduce the repeat value
+          buf[0]--;
+          
+          // Add the repeater ID
+          int packet_len = end_bracket + sprintf((char *)&buf[end_bracket], ",%s]", (const char *)id);
+
+          //random delay to try and avoid packet collision
+          delay(random(50, 800));
+          
+          rf69.send((uint8_t*)data, packet_len, rfm_power);
         }
       }
     }
