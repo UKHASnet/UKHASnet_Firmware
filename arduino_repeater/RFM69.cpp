@@ -95,7 +95,7 @@ void RFM69::spiFifoWrite(const uint8_t* src, uint8_t len)
     // First byte is packet length
     SPI.transfer(len);
     // Then write the packet
-	while (len--)
+    while (len--)
         SPI.transfer(*src++);
     	
     digitalWrite(_slaveSelectPin, HIGH);
@@ -104,7 +104,7 @@ void RFM69::spiFifoWrite(const uint8_t* src, uint8_t len)
 void RFM69::setMode(uint8_t newMode)
 {
     spiWrite(RFM69_REG_01_OPMODE, (spiRead(RFM69_REG_01_OPMODE) & 0xE3) | newMode);
-	_mode = newMode;
+    _mode = newMode;
 }
 
 uint8_t  RFM69::mode()
@@ -125,9 +125,9 @@ boolean RFM69::checkRx()
         // Clear the radio FIFO (found in HopeRF demo code)
         clearFifo();
         return true;
-    } else {
-    	return false;
-	}
+    }
+    
+    return false;
 }
 
 void RFM69::recv(uint8_t* buf, uint8_t* len)
@@ -150,14 +150,14 @@ void RFM69::send(const uint8_t* data, uint8_t len, uint8_t power)
     // Copy data into TX Buffer
     memcpy(_buf, data, len);
     // Update TX Buffer Size
-	_bufLen = len;
-	// Start Transmitter
+    _bufLen = len;
+    // Start Transmitter
     setMode(RFM69_MODE_TX);
     // Set up PA
     if(power<=17) {
         // Set PA Level
         uint8_t paLevel = power + 14;
-	    spiWrite(RFM69_REG_11_PA_LEVEL, RF_PALEVEL_PA0_OFF | RF_PALEVEL_PA1_ON | RF_PALEVEL_PA2_ON | paLevel);        
+	spiWrite(RFM69_REG_11_PA_LEVEL, RF_PALEVEL_PA0_OFF | RF_PALEVEL_PA1_ON | RF_PALEVEL_PA2_ON | paLevel);        
     } else {
         // Disable Over Current Protection
         spiWrite(RFM69_REG_13_OCP, RF_OCP_OFF);
@@ -166,7 +166,7 @@ void RFM69::send(const uint8_t* data, uint8_t len, uint8_t power)
         spiWrite(RFM69_REG_5C_TEST_PA2, 0x7C);
         // Set PA Level
         uint8_t paLevel = power + 11;
-	    spiWrite(RFM69_REG_11_PA_LEVEL, RF_PALEVEL_PA0_OFF | RF_PALEVEL_PA1_ON | RF_PALEVEL_PA2_ON | paLevel);
+	spiWrite(RFM69_REG_11_PA_LEVEL, RF_PALEVEL_PA0_OFF | RF_PALEVEL_PA1_ON | RF_PALEVEL_PA2_ON | paLevel);
     }
     // Wait for PA ramp-up
     while(!(spiRead(RFM69_REG_27_IRQ_FLAGS1) & RF_IRQFLAGS1_TXREADY)) { };
@@ -189,58 +189,57 @@ void RFM69::send(const uint8_t* data, uint8_t len, uint8_t power)
 }
 
 void RFM69::SetLnaMode(uint8_t lnaMode) {
-	// RF_TESTLNA_NORMAL (default)
-	// RF_TESTLNA_SENSITIVE
-	spiWrite(RFM69_REG_58_TEST_LNA, lnaMode);
+    // RF_TESTLNA_NORMAL (default)
+    // RF_TESTLNA_SENSITIVE
+    spiWrite(RFM69_REG_58_TEST_LNA, lnaMode);
 }
 
 void RFM69::clearFifo() {
-	// Must only be called in RX Mode
-	// Apparently this works... found in HopeRF demo code
-	setMode(RFM69_MODE_STDBY);
-	setMode(RFM69_MODE_RX);
+    // Must only be called in RX Mode
+    // Apparently this works... found in HopeRF demo code
+    setMode(RFM69_MODE_STDBY);
+    setMode(RFM69_MODE_RX);
 }
 
 float RFM69::readTemp()
 {
     // Store current transceiver mode
-	uint8_t oldMode = _mode;
-	// Set mode into Standby (required for temperature measurement)
-	setMode(RFM69_MODE_STDBY);
+    uint8_t oldMode = _mode;
+    // Set mode into Standby (required for temperature measurement)
+    setMode(RFM69_MODE_STDBY);
 	
-	// Trigger Temperature Measurement
-	spiWrite(RFM69_REG_4E_TEMP1, RF_TEMP1_MEAS_START);
-	// Check Temperature Measurement has started
-	if(!(RF_TEMP1_MEAS_RUNNING && spiRead(RFM69_REG_4E_TEMP1))){
-		return 255.0;
-	}
-	// Wait for Measurement to complete
-	while(RF_TEMP1_MEAS_RUNNING && spiRead(RFM69_REG_4E_TEMP1)) { };
-	// Read raw ADC value
-	uint8_t rawTemp = spiRead(RFM69_REG_4F_TEMP2);
+    // Trigger Temperature Measurement
+    spiWrite(RFM69_REG_4E_TEMP1, RF_TEMP1_MEAS_START);
+    // Check Temperature Measurement has started
+    if(!(RF_TEMP1_MEAS_RUNNING && spiRead(RFM69_REG_4E_TEMP1))){
+        return 255.0;
+    }
+    // Wait for Measurement to complete
+    while(RF_TEMP1_MEAS_RUNNING && spiRead(RFM69_REG_4E_TEMP1)) { };
+    // Read raw ADC value
+    uint8_t rawTemp = spiRead(RFM69_REG_4F_TEMP2);
 	
-	// Set transceiver back to original mode
-	setMode(oldMode);
-	// Return processed temperature value
-	return (159+_temperatureFudge)-float(rawTemp);
+    // Set transceiver back to original mode
+    setMode(oldMode);
+    // Return processed temperature value
+    return (159+_temperatureFudge)-float(rawTemp);
 }
 
 int RFM69::lastRssi() {
-	return _lastRssi;
+    return _lastRssi;
 }
 
 int RFM69::sampleRssi() {
     // Must only be called in RX mode
-	if(_mode!=RFM69_MODE_RX) {
-	    // Not sure what happens otherwise, so check this
-		return 0;
-	}
-	// Trigger RSSI Measurement
-	spiWrite(RFM69_REG_23_RSSI_CONFIG, RF_RSSI_START);
-	// Wait for Measurement to complete
-	while(!(RF_RSSI_DONE && spiRead(RFM69_REG_23_RSSI_CONFIG))) { };
-	// Read, store in _lastRssi and return RSSI Value
-	_lastRssi = -(spiRead(RFM69_REG_24_RSSI_VALUE)/2);
-	return _lastRssi;
+    if(_mode!=RFM69_MODE_RX) {
+        // Not sure what happens otherwise, so check this
+        return 0;
+    }
+    // Trigger RSSI Measurement
+    spiWrite(RFM69_REG_23_RSSI_CONFIG, RF_RSSI_START);
+    // Wait for Measurement to complete
+    while(!(RF_RSSI_DONE && spiRead(RFM69_REG_23_RSSI_CONFIG))) { };
+    // Read, store in _lastRssi and return RSSI Value
+    _lastRssi = -(spiRead(RFM69_REG_24_RSSI_VALUE)/2);
+    return _lastRssi;
 }
-
