@@ -22,7 +22,7 @@ char location_string[] = "50.93753,-1.39797";
 #endif
 #ifdef P02
 char id[] = "P02";
-char location_string[] = "50.93623,-1.39876";
+char location_string[] = "50.93613,-1.39592";
 #define BATTV_FUDGE 0.943
 #endif
 #ifdef P5
@@ -30,7 +30,7 @@ char id[] = "P5";
 char location_string[] = "50.93897,-1.39774";
 #define BATTV_FUDGE 0.943
 #endif
-#define BEACON_INTERVAL 30
+#define BEACON_INTERVAL 50
 uint8_t rfm_power = 20; // dBmW
 
 //************* Sensors ****************/
