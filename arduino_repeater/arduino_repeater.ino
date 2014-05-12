@@ -172,10 +172,8 @@ void loop()
           buf[0]--;
           
           // Add the repeater ID
-          sprintf(&buf[end_bracket], ",%s]", id);
-          
-          int packet_len = strlen(data);
-          
+          int packet_len = end_bracket + sprintf(&buf[end_bracket], ",%s]", id);
+
           //random delay to try and avoid packet collision
           delay(random(50, 800));
           
