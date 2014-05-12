@@ -190,8 +190,10 @@ void loop()
   }
   
   if (count >= data_interval){
-    data_count++;
+    count = 0;
 
+    data_count++;
+    
     if(data_count > 122){
       data_count = 98; //'b'
     }
