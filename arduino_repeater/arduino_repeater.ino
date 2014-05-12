@@ -167,12 +167,12 @@ void loop()
         }
 
         // Need to take the recieved buffer and decode it and add a reference 
-        if (buf[0] > '0' && end_bracket != -1 && strstr(&buf[start_bracket], id) == NULL) {
+        if (buf[0] > '0' && end_bracket != -1 && strstr((const char *)&buf[start_bracket], id) == NULL) {
           // Reduce the repeat value
           buf[0]--;
           
           // Add the repeater ID
-          int packet_len = end_bracket + sprintf(&buf[end_bracket], ",%s]", id);
+          int packet_len = end_bracket + sprintf((char *)&buf[end_bracket], ",%s]", id);
 
           //random delay to try and avoid packet collision
           delay(random(50, 800));
