@@ -177,7 +177,7 @@ void loop()
           //random delay to try and avoid packet collision
           delay(random(50, 800));
           
-          rf69.send((uint8_t*)data, packet_len, rfm_power);
+          rf69.send((uint8_t*)buf, packet_len, rfm_power);
         }
       }
     }
