@@ -11,54 +11,18 @@ Based on UKHASnet rf69_repeater by James Coxon M6JCX
 #include "RFM69Config.h"
 #include "RFM69.h"
 #include "LowPower.h"
-
-#define P5
-
-//************* Node ID Setup ****************/
-#ifdef P01
-char id[] = "P01";
-char location_string[] = "50.93753,-1.39797";
-#define BATTV_FUDGE 0.935
-#endif
-#ifdef P02
-char id[] = "P02";
-char location_string[] = "50.93613,-1.39592";
-#define BATTV_FUDGE 0.943
-#endif
-#ifdef P5
-char id[] = "P5";
-char location_string[] = "50.93897,-1.39774";
-#define BATTV_FUDGE 0.943
-#endif
-#define BEACON_INTERVAL 50
-uint8_t rfm_power = 20; // dBmW
-
-//************* Sensors ****************/
-// Battery Voltage Measurement - Also enables zombie mode
-#define ENABLE_BATTV_SENSOR // Comment out to disable, also disables zombie mode
-#define BATTV_PIN 0 //ADC 0 - Battery Voltage, scaled to 1.1V
-#define BATTV_FUDGE 0.943
-// RFM Temperature Sensor - Not very accurate and sometimes glitchy
-#define ENABLE_RFM_TEMPERATURE // Comment out to disable
-#define RX_TEMP_FUDGE 5.0 // Temperature offset when in RX due to self-heating
-
-//************* Power Saving ****************/
-#ifdef ENABLE_BATTV_SENSOR
-  #define ENABLE_ZOMBIE_MODE // Comment this out to disable
-#endif
-uint8_t zombie_mode; // Stores current status: 0 - Full Repeating, 1 - Low Power shutdown, (beacon only)
-#define ZOMBIE_THRESHOLD 3.65
+#include "NodeConfig.h"
 
 //************* Misc Setup ****************/
-byte num_repeats = '3'; //The number of hops the message will make before stopping
 float battV=0.0;
 uint8_t n;
-uint32_t count = 1, data_interval = 10;
+uint32_t count = 1, data_interval = 2; // Initially send a couple of beacons in quick succession
+uint8_t zombie_mode; // Stores current status: 0 - Full Repeating, 1 - Low Power shutdown, (beacon only)
 uint8_t data_count = 97; // 'a'
 char data[64], string_end[] = "]";
 
 // Singleton instance of the radio
-RFM69 rf69(9.3); // parameter: RFM temperature calibration offset (degrees as float)
+RFM69 rf69(RFM_TEMP_FUDGE); // parameter: RFM temperature calibration offset (degrees as float)
 
 #ifdef ENABLE_RFM_TEMPERATURE
 int8_t sampleRfmTemp() {
@@ -135,6 +99,11 @@ void setup()
   rf69.setMode(RFM69_MODE_RX);
   zombie_mode=0;
   #endif
+  
+    #ifdef SENSITIVE_RX
+    rf69.SetLnaMode(RF_TESTLNA_SENSITIVE);
+    #endif
+  
 }
 
 void loop()
@@ -208,6 +177,9 @@ void loop()
         rf69.setMode(RFM69_MODE_SLEEP);
         zombie_mode=1;
     }
+    #endif
+    #ifdef SENSITIVE_RX
+    rf69.SetLnaMode(RF_TESTLNA_SENSITIVE);
     #endif
   }
 }
