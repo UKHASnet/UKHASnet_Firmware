@@ -13,26 +13,44 @@ Based on UKHASnet rf69_repeater by James Coxon M6JCX
 #include "LowPower.h"
 #include "DallasTemperature.h"
 
-#define P5
+
+#define PS02
 
 //************* Node ID Setup ****************/
-#ifdef P5
-char id[] = "P5";
-char location_string[] = "50.93897,-1.39774";
-#define BATTV_FUDGE 0.943
+#ifdef PS00
+char id[] = "PS00";
+char location_string[] = "50.93891,-1.39774";
+#define BATTV_FUDGE 1.109
+#define BEACON_INTERVAL 15
+uint8_t rfm_power = 10; // dBmW
+byte num_repeats = '0'; //The number of hops the message will make before stopping
 #endif
-#define BEACON_INTERVAL 7
-uint8_t rfm_power = 20; // dBmW
+
+#ifdef PS01
+char id[] = "PS01";
+char location_string[] = "50.93898,-1.39762";
+#define BATTV_FUDGE 1.109
+#define BEACON_INTERVAL 15
+uint8_t rfm_power = 10; // dBmW
+byte num_repeats = '0'; //The number of hops the message will make before stopping
+#endif
+
+#ifdef PS02
+char id[] = "PS02";
+char location_string[] = "50.93877,-1.3979";
+#define BATTV_FUDGE 1.109
+#define BEACON_INTERVAL 15
+uint8_t rfm_power = 10; // dBmW
+byte num_repeats = '0'; //The number of hops the message will make before stopping
+#endif
 
 //************* Sensors ****************/
 // Battery Voltage Measurement - Also enables zombie mode
 #define ENABLE_BATTV_SENSOR // Comment out to disable, also disables zombie mode
 #define BATTV_PIN 0 //ADC 0 - Battery Voltage, scaled to 1.1V
-#define BATTV_FUDGE 1.109
-DeviceAddress ds_addr;
 
 //************* Misc Setup ****************/
-byte num_repeats = '3'; //The number of hops the message will make before stopping
+DeviceAddress ds_addr;
 float battV=0.0;
 uint8_t n;
 uint32_t count = 1, data_interval = 10;
