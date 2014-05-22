@@ -787,9 +787,9 @@ public:
     
     float          readTemp();
     
-    int             lastRssi();
+    int16_t             lastRssi();
     
-    int             sampleRssi();
+    int16_t             sampleRssi();
     
     void            SetLnaMode(uint8_t lnaMode);
     
@@ -807,7 +807,7 @@ private:
     uint8_t             _bufLen;
     uint8_t             _buf[RFM69_MAX_MESSAGE_LEN];
 
-    int                 _lastRssi;
+    int16_t                 _lastRssi;
 };
 
 

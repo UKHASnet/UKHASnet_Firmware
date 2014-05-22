@@ -222,14 +222,14 @@ float RFM69::readTemp()
     // Set transceiver back to original mode
     setMode(oldMode);
     // Return processed temperature value
-    return (159+_temperatureFudge)-float(rawTemp);
+    return (168.3+_temperatureFudge)-float(rawTemp);
 }
 
-int RFM69::lastRssi() {
+int16_t RFM69::lastRssi() {
     return _lastRssi;
 }
 
-int RFM69::sampleRssi() {
+int16_t RFM69::sampleRssi() {
     // Must only be called in RX mode
     if(_mode!=RFM69_MODE_RX) {
         // Not sure what happens otherwise, so check this
