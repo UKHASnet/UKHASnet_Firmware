@@ -17,12 +17,6 @@ GPS Code from Habduino by Anthony Stirk M0UPU - https://github.com/HABduino/HABd
 #include "DallasTemperature.h"
 #include "NodeConfig.h"
 
-
-//************* Sensors ****************/
-// Battery Voltage Measurement - Also enables zombie mode
-#define ENABLE_BATTV_SENSOR // Comment out to disable, also disables zombie mode
-#define BATTV_PIN 0 //ADC 0 - Battery Voltage, scaled to 1.1V
-
 //************* Misc Setup ****************/
 DeviceAddress ds_addr;
 float battV=0.0;
