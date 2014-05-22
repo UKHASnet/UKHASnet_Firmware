@@ -10,31 +10,16 @@ Based on UKHASnet rf69_repeater by James Coxon M6JCX
 #include <string.h>
 #include "RFM69Config.h"
 #include "RFM69.h"
-
-#define P00
-
-//************* Node ID Setup ****************/
-#ifdef P00
-char id[] = "P00";
-char location_string[] = "50.93895,-1.39776";
-#define BEACON_INTERVAL 500 // In seconds
-uint8_t rfm_power = 20; // dBmW
-#endif
-
-//************* Sensors ****************/
-// RFM Temperature Sensor - Not very accurate and sometimes glitchy
-#define ENABLE_RFM_TEMPERATURE // Comment out to disable
-#define RX_TEMP_FUDGE 5.0 // Temperature offset when in RX due to self-heating
+#include "NodeConfig.h"
 
 //************* Misc Setup ****************/
-byte num_repeats = '1'; //The number of hops the message will make before stopping
 uint8_t n;
-uint32_t count = 1, data_interval = 10;
+uint32_t count = 1, data_interval = 2;
 uint8_t data_count = 97; // 'a'
 char data[64], string_end[] = "]";
 
 // Singleton instance of the radio
-RFM69 rf69(9.3); // parameter: RFM temperature calibration offset (degrees as float)
+RFM69 rf69(RFM_TEMP_FUDGE); // parameter: RFM temperature calibration offset (degrees as float)
 
 #ifdef ENABLE_RFM_TEMPERATURE
 int8_t sampleRfmTemp() {
