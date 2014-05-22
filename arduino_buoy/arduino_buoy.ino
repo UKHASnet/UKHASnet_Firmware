@@ -15,33 +15,24 @@ GPS Code from Habduino by Anthony Stirk M0UPU - https://github.com/HABduino/HABd
 #include "RFM69.h"
 #include "LowPower.h"
 #include "DallasTemperature.h"
+#include "NodeConfig.h"
 
-#define PB1
-
-//************* Node ID Setup ****************/
-#ifdef PB1
-char id[] = "PB1";
-#define BATTV_FUDGE 1.098
-#endif
-#define BEACON_INTERVAL 20
-uint8_t rfm_power = 10; // dBmW
 
 //************* Sensors ****************/
 // Battery Voltage Measurement - Also enables zombie mode
 #define ENABLE_BATTV_SENSOR // Comment out to disable, also disables zombie mode
 #define BATTV_PIN 0 //ADC 0 - Battery Voltage, scaled to 1.1V
-DeviceAddress ds_addr;
 
 //************* Misc Setup ****************/
-byte num_repeats = '3'; //The number of hops the message will make before stopping
+DeviceAddress ds_addr;
 float battV=0.0;
 uint8_t n;
-uint32_t count = 1, data_interval = 10;
+uint32_t count = 1, data_interval = 2;
 uint8_t data_count = 97; // 'a'
 char data[64], string_end[] = "]";
 
 // Singleton instance of the radio
-RFM69 rf69(9.3); // parameter: RFM temperature calibration offset (degrees as float)
+RFM69 rf69(RFM_TEMP_FUDGE); // parameter: RFM temperature calibration offset (degrees as float)
 OneWire ow(9);  // on pin PB1 (arduino: 9)
 DallasTemperature sensors(&ow);
 
