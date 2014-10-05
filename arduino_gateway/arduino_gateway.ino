@@ -17,6 +17,7 @@ uint8_t n;
 uint32_t count = 1, data_interval = 2;
 uint8_t data_count = 97; // 'a'
 char data[64], string_end[] = "]";
+int packet_len;
 
 // Singleton instance of the radio
 RFM69 rf69(RFM_TEMP_FUDGE); // parameter: RFM temperature calibration offset (degrees as float)
@@ -33,11 +34,15 @@ int8_t sampleRfmTemp() {
 #endif
 
 int gen_Data(){
+  #ifdef LOCATION_STRING
   if(data_count=='a' or data_count=='z') {
-      sprintf(data, "%c%cL%s", num_repeats, data_count, location_string);
+      sprintf(data, "%c%cL%s", num_repeats, data_count, LOCATION_STRING);
   } else {
       sprintf(data, "%c%c", num_repeats, data_count);
   }
+  #else
+  sprintf(data, "%c%c", num_repeats, data_count);
+  #endif
   
   #ifdef ENABLE_RFM_TEMPERATURE
   sprintf(data,"%sT%d",data,sampleRfmTemp());
@@ -63,14 +68,28 @@ void setup()
   rf69.setMode(RFM69_MODE_RX);
   rf69.SetLnaMode(RF_TESTLNA_SENSITIVE);
   
+  // Send our own packet to serial port
+    for (int j=0; j<packet_len; j++)
+    {
+        if(data[j]==']')
+        {
+            Serial.println(data[j]);
+            break;
+        }
+        else
+        {
+            Serial.print(data[j]);
+        }
+    }
+  
 }
 
 void loop()
 {
   count++;
     
-    for(int i=0;i<100;i++) {
-      delay(10);
+    for(int i=0;i<20;i++) {
+      delay(50);
       
       if (rf69.checkRx()) {
         uint8_t buf[64];
@@ -79,16 +98,11 @@ void loop()
         
         rf69.recv(buf, &len);
         rx_rssi = rf69.lastRssi();
-        Serial.print("rx: ");
-        for (int i=0; i<len; i++) {
-            if (buf[i] != ']') {
-                Serial.print((char)buf[i]);
-            } else {
-                Serial.println((char)buf[i]);
-                break;
-            }
+        for (int j=0; j<len; j++) {
+            Serial.print((char)buf[j]);
+            if(buf[j]==']') break;
         }
-        Serial.print("RSSI: ");
+        Serial.print("|");
         Serial.println(rx_rssi);
       }
     }
@@ -100,11 +114,26 @@ void loop()
       data_count = 98; //'b'
     }
     
-    int packet_len = gen_Data();
+    packet_len = gen_Data();
     rf69.send((uint8_t*)data, packet_len, rfm_power);
     
-    data_interval = random(BEACON_INTERVAL, BEACON_INTERVAL+20) + count;
     rf69.setMode(RFM69_MODE_RX);
     rf69.SetLnaMode(RF_TESTLNA_SENSITIVE);
+    
+    // Send our own packet to serial port
+    for (int j=0; j<packet_len; j++)
+    {
+        if(data[j]==']') // Check for last char in packet
+        {
+            Serial.println(data[j]);
+            break;
+        }
+        else
+        {
+            Serial.print(data[j]);
+        }
+    }
+    
+    data_interval = random(BEACON_INTERVAL, BEACON_INTERVAL+20) + count;
   }
 }
