@@ -38,37 +38,42 @@ int8_t sampleRfmTemp() {
 #endif
 
 #ifdef ENABLE_BATTV_SENSOR
-float sampleBattv() {
-  // External 4:1 Divider
-  return ((float)analogRead(BATTV_PIN)*1.1*4*BATTV_FUDGE)/1023.0;
-}
+ float sampleBattv() {
+   // External 4:1 Divider
+   return ((float)analogRead(BATTV_PIN)*1.1*4*BATTV_FUDGE)/1023.0;
+ }
 #endif
 
 int gen_Data(){
-  if(data_count=='a' or data_count=='z') {
-      sprintf(data, "%c%cL%s", num_repeats, data_count, location_string);
-  } else {
-      sprintf(data, "%c%c", num_repeats, data_count);
-  }
+
+  #ifdef LOCATION_STRING
+   if(data_count=='a' or data_count=='z') {
+       sprintf(data, "%c%cL%s", num_repeats, data_count, LOCATION_STRING);
+   } else {
+       sprintf(data, "%c%c", num_repeats, data_count);
+   }
+  #else
+   sprintf(data, "%c%c", num_repeats, data_count);
+  #endif
   
   #ifdef ENABLE_RFM_TEMPERATURE
-  sprintf(data,"%sT%d",data,sampleRfmTemp());
+   sprintf(data,"%sT%d",data,sampleRfmTemp());
   #endif
   
   #ifdef ENABLE_BATTV_SENSOR
-  battV = sampleBattv();
-  char* battStr;
-  char tempStrB[14]; //make buffer large enough for 7 digits
-  battStr = dtostrf(battV,7,2,tempStrB);
-  while( (strlen(battStr) > 0) && (battStr[0] == 32) )
-  {
-     strcpy(battStr,&battStr[1]);
-  }
-  sprintf(data,"%sV%s",data,battStr);
+   battV = sampleBattv();
+   char* battStr;
+   char tempStrB[14]; //make buffer large enough for 7 digits
+   battStr = dtostrf(battV,7,2,tempStrB);
+   while( (strlen(battStr) > 0) && (battStr[0] == 32) )
+   {
+      strcpy(battStr,&battStr[1]);
+   }
+   sprintf(data,"%sV%s",data,battStr);
   #endif
   
   #ifdef ENABLE_ZOMBIE_MODE
-  sprintf(data,"%sZ%d",data,zombie_mode);
+   sprintf(data,"%sZ%d",data,zombie_mode);
   #endif
   
   return sprintf(data,"%s[%s]",data,id);
@@ -88,20 +93,20 @@ void setup()
   rf69.send((uint8_t*)data, packet_len, rfm_power);
   
   #ifdef ENABLE_ZOMBIE_MODE
-  if(battV > ZOMBIE_THRESHOLD) {
-    rf69.setMode(RFM69_MODE_RX);
-    zombie_mode=0;
-  } else {
-    rf69.setMode(RFM69_MODE_SLEEP);
-    zombie_mode=1;
-  }
+   if(battV > ZOMBIE_THRESHOLD) {
+     rf69.setMode(RFM69_MODE_RX);
+     zombie_mode=0;
+   } else {
+     rf69.setMode(RFM69_MODE_SLEEP);
+     zombie_mode=1;
+   }
   #else
-  rf69.setMode(RFM69_MODE_RX);
-  zombie_mode=0;
+   rf69.setMode(RFM69_MODE_RX);
+   zombie_mode=0;
   #endif
   
     #ifdef SENSITIVE_RX
-    rf69.SetLnaMode(RF_TESTLNA_SENSITIVE);
+     rf69.SetLnaMode(RF_TESTLNA_SENSITIVE);
     #endif
   
 }
@@ -151,9 +156,9 @@ void loop()
       }
     }
   } else {
-    // Sample Sensors here..
+    // Battery Voltage Low - Zombie Mode
     
-    // Sleep for 8 seconds
+    // Low Power Sleep for 8 seconds
     rf69.setMode(RFM69_MODE_SLEEP);
     LowPower.powerDown(SLEEP_8S, ADC_OFF, BOD_OFF);
   }
@@ -170,16 +175,16 @@ void loop()
     
     data_interval = random(BEACON_INTERVAL, BEACON_INTERVAL+10) + count;
     #ifdef ENABLE_ZOMBIE_MODE
-    if(battV > ZOMBIE_THRESHOLD && zombie_mode==1) {
-        rf69.setMode(RFM69_MODE_RX);
-        zombie_mode=0;
-    } else if (battV < ZOMBIE_THRESHOLD && zombie_mode==0) {
-        rf69.setMode(RFM69_MODE_SLEEP);
-        zombie_mode=1;
-    }
+     if(battV > ZOMBIE_THRESHOLD && zombie_mode==1) {
+         rf69.setMode(RFM69_MODE_RX);
+         zombie_mode=0;
+     } else if (battV < ZOMBIE_THRESHOLD && zombie_mode==0) {
+         rf69.setMode(RFM69_MODE_SLEEP);
+         zombie_mode=1;
+     }
     #endif
     #ifdef SENSITIVE_RX
-    rf69.SetLnaMode(RF_TESTLNA_SENSITIVE);
+     rf69.SetLnaMode(RF_TESTLNA_SENSITIVE);
     #endif
   }
 }
