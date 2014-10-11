@@ -6,7 +6,7 @@
  char id[] = "YYYY";
  #define LOCATION_STRING "50.4535,-1.35435"
  byte num_repeats = '3'; //The number of hops the message will make in the network
- #define BEACON_INTERVAL 55 // Beacon Interval is (x * 8) seconds
+ #define BEACON_INTERVAL 300 // Beacon Interval in seconds
  uint8_t rfm_power = 20; // dBmW
  #define SENSITIVE_RX // Enables TESTLNA_SENSITIVE
  #define ENABLE_BATTV_SENSOR // Comment out to disable, you must also disable zombie mode
@@ -21,7 +21,7 @@
  char id[] = "XXXX";
  #define LOCATION_STRING "50.2475,-1.36545"
  byte num_repeats = '3'; //The number of hops the message will make in the network
- #define BEACON_INTERVAL 50 // Beacon Interval is (x * 8) seconds
+ #define BEACON_INTERVAL 300 // Beacon Interval in seconds
  uint8_t rfm_power = 20; // dBmW
  #define SENSITIVE_RX // Enables TESTLNA_SENSITIVE
  #define ENABLE_BATTV_SENSOR // Comment out to disable, you must also disable zombie mode

@@ -118,8 +118,8 @@ void loop()
   if(zombie_mode==0) {
     rf69.setMode(RFM69_MODE_RX);
     
-    for(int i=0;i<64;i++) {
-      LowPower.powerDown(SLEEP_120MS, ADC_OFF, BOD_OFF);
+    for(uint8_t i=0;i<255;i++) {
+      LowPower.powerDown(SLEEP_30MS, ADC_OFF, BOD_OFF);
       
       if (rf69.checkRx()) {
         uint8_t buf[64];
@@ -173,7 +173,7 @@ void loop()
     int packet_len = gen_Data();
     rf69.send((uint8_t*)data, packet_len, rfm_power);
     
-    data_interval = random(BEACON_INTERVAL, BEACON_INTERVAL+10) + count;
+    data_interval = random((BEACON_INTERVAL/8), (BEACON_INTERVAL/8)+2) + count;
     #ifdef ENABLE_ZOMBIE_MODE
      if(battV > ZOMBIE_THRESHOLD && zombie_mode==1) {
          rf69.setMode(RFM69_MODE_RX);
