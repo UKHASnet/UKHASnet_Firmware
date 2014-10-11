@@ -154,6 +154,6 @@ void loop()
     int packet_len = gen_Data();
     rf69.send((uint8_t*)data, packet_len, rfm_power);
     
-    data_interval = random(BEACON_INTERVAL, BEACON_INTERVAL+10) + count;
+    data_interval = random((BEACON_INTERVAL/8), (BEACON_INTERVAL/8)+2) + count;
   }
 }
