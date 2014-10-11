@@ -15,16 +15,16 @@ Based on UKHASnet rf69_repeater by James Coxon M6JCX
 #include "NodeConfig.h"
 
 #ifdef DS18B20
-#include "DallasTemperature.h"
-DeviceAddress ds_addr;
-OneWire ow(9);  // on pin PB1 (arduino: 9)
-DallasTemperature sensors(&ow);
+ #include "DallasTemperature.h"
+ DeviceAddress ds_addr;
+ OneWire ow(9);  // on pin PB1 (arduino: 9)
+ DallasTemperature sensors(&ow);
 #endif
 
 #ifdef DHT22
-#include "dht.h"
-dht DHT;
-#define DHT22_PIN 9 // Arduino pin 9
+ #include "dht.h"
+ dht DHT;
+ #define DHT22_PIN 9 // Arduino pin 9
 #endif
 
 //************* Misc Setup ****************/
@@ -39,43 +39,43 @@ RFM69 rf69(RFM_TEMP_FUDGE); // parameter: RFM temperature calibration offset (de
 
 
 #ifdef ENABLE_BATTV_SENSOR
-float sampleBattv() {
-  // External 5:1 Divider
-  return ((float)analogRead(BATTV_PIN)*1.1*5*BATTV_FUDGE)/1023.0;
-}
+ float sampleBattv() {
+   // External 5:1 Divider
+   return ((float)analogRead(BATTV_PIN)*1.1*5*BATTV_FUDGE)/1023.0;
+ }
 #endif
 
 int gen_Data(){
 
   #ifdef LOCATION_STRING
-  if(data_count=='a' or data_count=='z') {
-      sprintf(data, "%c%cL%s", num_repeats, data_count, LOCATION_STRING);
-  } else {
-      sprintf(data, "%c%c", num_repeats, data_count);
-  }
+   if(data_count=='a' or data_count=='z') {
+       sprintf(data, "%c%cL%s", num_repeats, data_count, LOCATION_STRING);
+   } else {
+       sprintf(data, "%c%c", num_repeats, data_count);
+   }
   #else
-  sprintf(data, "%c%c", num_repeats, data_count);
+   sprintf(data, "%c%c", num_repeats, data_count);
   #endif
   
   // Temperature (DS18B20 or DHT22)
   
   #ifdef DS18B20
-  sensors.setWaitForConversion(false);
-  sensors.requestTemperatures();
-  LowPower.powerDown(SLEEP_1S, ADC_OFF, BOD_OFF);
+   sensors.setWaitForConversion(false);
+   sensors.requestTemperatures();
+   LowPower.powerDown(SLEEP_1S, ADC_OFF, BOD_OFF);
   
-  float temp = sensors.getTempC(ds_addr);
+   float temp = sensors.getTempC(ds_addr);
   #endif
   
   #ifdef DHT22
-  int chk = DHT.read22(DHT22_PIN);
+   int chk = DHT.read22(DHT22_PIN);
 
-  while(chk!=DHTLIB_OK)
-  {
-    LowPower.powerDown(SLEEP_1S, ADC_OFF, BOD_OFF);
-    chk = DHT.read22(DHT22_PIN);
-  }
-  float temp = DHT.temperature;
+   while(chk!=DHTLIB_OK)
+   {
+     LowPower.powerDown(SLEEP_1S, ADC_OFF, BOD_OFF);
+     chk = DHT.read22(DHT22_PIN);
+   }
+   float temp = DHT.temperature;
   #endif
   
   char* tempStr;
@@ -90,28 +90,28 @@ int gen_Data(){
   // Humidity (DHT22)
   
   #ifdef DHT22
-  float humid = DHT.humidity;
+   float humid = DHT.humidity;
   
-  tempStr = dtostrf(humid,6,1,tempStrA);
-  while( (strlen(tempStr) > 0) && (tempStr[0] == 32) )
-  {
-     strcpy(tempStr,&tempStr[1]);
-  }
-  sprintf(data,"%sH%s",data,tempStr);
+   tempStr = dtostrf(humid,6,1,tempStrA);
+   while( (strlen(tempStr) > 0) && (tempStr[0] == 32) )
+   {
+      strcpy(tempStr,&tempStr[1]);
+   }
+   sprintf(data,"%sH%s",data,tempStr);
   #endif
   
   // Battery Voltage
   
   #ifdef ENABLE_BATTV_SENSOR
-  battV = sampleBattv();
-  char* battStr;
-  char tempStrB[14]; //make buffer large enough for 7 digits
-  battStr = dtostrf(battV,7,2,tempStrB);
-  while( (strlen(battStr) > 0) && (battStr[0] == 32) )
-  {
-     strcpy(battStr,&battStr[1]);
-  }
-  sprintf(data,"%sV%s",data,battStr);
+   battV = sampleBattv();
+   char* battStr;
+   char tempStrB[14]; //make buffer large enough for 7 digits
+   battStr = dtostrf(battV,7,2,tempStrB);
+   while( (strlen(battStr) > 0) && (battStr[0] == 32) )
+   {
+      strcpy(battStr,&battStr[1]);
+   }
+   sprintf(data,"%sV%s",data,battStr);
   #endif
   
   return sprintf(data,"%s[%s]",data,id);
@@ -124,9 +124,9 @@ void setup()
   delay(1000);
   
   #ifdef DS18B20
-  sensors.begin();
-  sensors.getAddress(ds_addr, 0);
-  sensors.setResolution(ds_addr, 12);
+   sensors.begin();
+   sensors.getAddress(ds_addr, 0);
+   sensors.setResolution(ds_addr, 12);
   #endif
   
   while (!rf69.init()){
