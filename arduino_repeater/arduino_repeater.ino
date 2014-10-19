@@ -15,7 +15,7 @@ Based on UKHASnet rf69_repeater by James Coxon M6JCX
 
 //************* Misc Setup ****************/
 float battV=0.0;
-uint8_t n;
+uint8_t n, j;
 uint32_t count = 1, data_interval = 2; // Initially send a couple of beacons in quick succession
 uint8_t zombie_mode; // Stores current status: 0 - Full Repeating, 1 - Low Power shutdown, (beacon only)
 uint8_t data_count = 97; // 'a'
@@ -96,6 +96,9 @@ void setup()
    if(battV > ZOMBIE_THRESHOLD) {
      rf69.setMode(RFM69_MODE_RX);
      zombie_mode=0;
+     #ifdef SENSITIVE_RX
+      rf69.SetLnaMode(RF_TESTLNA_SENSITIVE);
+     #endif
    } else {
      rf69.setMode(RFM69_MODE_SLEEP);
      zombie_mode=1;
@@ -103,12 +106,26 @@ void setup()
   #else
    rf69.setMode(RFM69_MODE_RX);
    zombie_mode=0;
+   #ifdef SENSITIVE_RX
+    rf69.SetLnaMode(RF_TESTLNA_SENSITIVE);
+   #endif
   #endif
   
-    #ifdef SENSITIVE_RX
-     rf69.SetLnaMode(RF_TESTLNA_SENSITIVE);
-    #endif
-  
+  #ifdef ENABLE_UART_OUTPUT
+   // Print out own beacon packet
+   for (j=0; j<packet_len; j++)
+   {
+     if(data[j]==']')
+     {
+       Serial.println(data[j]);
+       break;
+     }
+     else
+     {
+       Serial.print(data[j]);
+     }
+   }
+  #endif
 }
 
 void loop()
@@ -124,8 +141,19 @@ void loop()
       if (rf69.checkRx()) {
         uint8_t buf[64];
         uint8_t len = sizeof(buf);
+        int rx_rssi;
         
         rf69.recv(buf, &len);
+        
+        #ifdef ENABLE_UART_OUTPUT
+         rx_rssi = rf69.lastRssi();
+         for (j=0; j<len; j++) {
+             Serial.print((char)buf[j]);
+             if(buf[j]==']') break;
+         }
+         Serial.print("|");
+         Serial.println(rx_rssi);
+        #endif
 
         // find end of packet & start of repeaters
         int end_bracket = -1, start_bracket = -1;        
@@ -152,6 +180,21 @@ void loop()
           delay(random(50, 800));
           
           rf69.send((uint8_t*)buf, packet_len, rfm_power);
+          #ifdef ENABLE_UART_OUTPUT
+           // Print repeated packet
+           for (j=0; j<packet_len; j++)
+           {
+             if(data[j]==']')
+             {
+               Serial.println(data[j]);
+               break;
+             }
+             else
+             {
+               Serial.print(data[j]);
+             }
+           }
+          #endif
         }
       }
     }
@@ -172,19 +215,34 @@ void loop()
     
     int packet_len = gen_Data();
     rf69.send((uint8_t*)data, packet_len, rfm_power);
+    #ifdef ENABLE_UART_OUTPUT
+       // Print out own beacon packet
+       for (j=0; j<packet_len; j++)
+       {
+         if(data[j]==']')
+         {
+           Serial.println(data[j]);
+           break;
+         }
+         else
+         {
+           Serial.print(data[j]);
+         }
+       }
+    #endif
     
     data_interval = random((BEACON_INTERVAL/8), (BEACON_INTERVAL/8)+2) + count;
     #ifdef ENABLE_ZOMBIE_MODE
      if(battV > ZOMBIE_THRESHOLD && zombie_mode==1) {
          rf69.setMode(RFM69_MODE_RX);
          zombie_mode=0;
+         #ifdef SENSITIVE_RX
+          rf69.SetLnaMode(RF_TESTLNA_SENSITIVE);
+         #endif
      } else if (battV < ZOMBIE_THRESHOLD && zombie_mode==0) {
          rf69.setMode(RFM69_MODE_SLEEP);
          zombie_mode=1;
      }
-    #endif
-    #ifdef SENSITIVE_RX
-     rf69.SetLnaMode(RF_TESTLNA_SENSITIVE);
     #endif
   }
 }
