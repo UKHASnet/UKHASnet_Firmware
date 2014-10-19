@@ -35,3 +35,7 @@ Note: Only the RFM69*H*W can transmit at more than 50mW.
 **SENSITIVE_RX**
 
 This enables extra gain on the Receive LNA. Note: This has been found to cause receiver overload when other high-power (>50mW) nodes are within a few meters, these packets may therefore not be received.
+
+**ENABLE_UART_OUTPUT**
+
+This enables the printing of packets generated, received and repeated to the UART at 9600 baud. This allows use as a gateway node when the UART is connected to a network-connected device and the packets are uploaded to UKHAS.net

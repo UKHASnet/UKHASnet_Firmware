@@ -15,12 +15,7 @@ This code implements the UKHASnet repeating protocol.
 
 The 'zombie mode' is where the node will stop repeating, only transmitting it's own beacon packets, if the battery level is low. If the battery level declines further, the node will stop transmitting altogether until the voltage recovers.
 
-arduino-gateway
-======
-
-This is a gateway implementation designed to be used with an ATMega168/328 and the Arduino IDE.
-
-In addition to transmitting it's own beacons, this program will output it's own packets, and any that it hears, on the UART at 9600 baud. This allows it to be used in conjunction with a PC or other IP-connected device, to upload the Packet Traffic to ukhas.net
+UART output, when enabled, allows the node to be used to submit packets generated, heard and repeated up to the UKHAS.net system.
 
 arduino-sensor
 ======
