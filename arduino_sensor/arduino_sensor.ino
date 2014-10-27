@@ -35,7 +35,7 @@ uint8_t data_count = 97; // 'a'
 char data[64], string_end[] = "]";
 
 // Singleton instance of the radio
-RFM69 rf69(RFM_TEMP_FUDGE); // parameter: RFM temperature calibration offset (degrees as float)
+RFM69 rf69;
 
 
 #ifdef ENABLE_BATTV_SENSOR

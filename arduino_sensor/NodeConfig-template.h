@@ -26,6 +26,3 @@
  #define ENABLE_BATTV_SENSOR // Comment out to disable
  #define BATTV_PIN 0 //ADC 0 - Battery Voltage, scaled to 1.1V
 #endif
-
-//************* Other config ****************/
-#define RFM_TEMP_FUDGE 0
