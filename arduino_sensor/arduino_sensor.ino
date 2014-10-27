@@ -57,6 +57,11 @@ int gen_Data(){
    sprintf(data, "%c%c", num_repeats, data_count);
   #endif
   
+  #ifdef SENSOR_VCC
+   digitalWrite(8, HIGH);
+   LowPower.powerDown(SLEEP_15MS, ADC_OFF, BOD_OFF);
+  #endif
+  
   // Temperature (DS18B20 or DHT22)
   
   #ifdef DS18B20
@@ -100,6 +105,10 @@ int gen_Data(){
    sprintf(data,"%sH%s",data,tempStr);
   #endif
   
+  #ifdef SENSOR_VCC
+   digitalWrite(8, LOW);
+  #endif
+  
   // Battery Voltage
   
   #ifdef ENABLE_BATTV_SENSOR
@@ -123,15 +132,27 @@ void setup()
   randomSeed(analogRead(6));
   delay(1000);
   
-  #ifdef DS18B20
-   sensors.begin();
-   sensors.getAddress(ds_addr, 0);
-   sensors.setResolution(ds_addr, 12);
+  #ifdef SENSOR_VCC
+   pinMode(8, OUTPUT);
+   digitalWrite(8, LOW);
   #endif
   
   while (!rf69.init()){
-    delay(100);
+    LowPower.powerDown(SLEEP_120MS, ADC_OFF, BOD_OFF);
   }
+  
+  #ifdef DS18B20
+   #ifdef SENSOR_VCC
+    digitalWrite(8, HIGH);
+    LowPower.powerDown(SLEEP_15MS, ADC_OFF, BOD_OFF);
+   #endif
+   sensors.begin();
+   sensors.getAddress(ds_addr, 0);
+   sensors.setResolution(ds_addr, 12);
+   #ifdef SENSOR_VCC
+    digitalWrite(8, LOW);
+   #endif
+  #endif
   
   int packet_len = gen_Data();
   rf69.send((uint8_t*)data, packet_len, rfm_power);

@@ -22,6 +22,7 @@
  #define BEACON_INTERVAL 120 // Beacon Interval in seconds
  uint8_t rfm_power = 10; // dBmW
  #define DHT22
+ #define SENSOR_VCC // Arduino Pin 8 used for switched Sensor Power Supply
  #define ENABLE_BATTV_SENSOR // Comment out to disable
  #define BATTV_PIN 0 //ADC 0 - Battery Voltage, scaled to 1.1V
 #endif

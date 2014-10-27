@@ -9,8 +9,6 @@ Sensors Supported:
 
 This does not repeat, instead it sleeps inbetween it's own beacons to save battery power. This can run for many months off a single set of cheap AA batteries (7 months so far and counting!).
 
-It is planned in the future to power the sensor off a switched Arduino Pin, to reduce standby current further. However this has not yet been implemented. *Phil - PCBs with this function on the way!*s
-
 
 NodeConfig.h
 ======
@@ -36,3 +34,7 @@ The time interval between the nodes own beacons will be a random number of secon
 This configures the Transmit Power of the RFM69, in dBmW. eg. 1dBmW = 1mW, 10dBmW = 10mW, 17dBmW = 50mW, 20dBm = 100mW.
 
 Note: Only the RFM69*H*W can transmit at more than 50mW.
+
+**SENSOR_VCC**
+
+This should be enabled when the sensor (DS18B20/DHT22) uses pin 'PB0' (Arduino 'D8') for positive voltage supply. This will allow the sensor to be fully powered down while the microcontroller is in sleep. The sensor will be powered up 15ms before communication is attempted.
