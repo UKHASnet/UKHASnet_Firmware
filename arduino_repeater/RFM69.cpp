@@ -12,15 +12,13 @@
 #include "RFM69.h"
 #include "RFM69Config.h"
 
-RFM69::RFM69(float tempFudge)
+RFM69::RFM69()
 {
     _mode = RFM69_MODE_RX;
-    _temperatureFudge = tempFudge;
 }
 
 boolean RFM69::init()
 {
-    delay(12);
     _slaveSelectPin = 10;
     pinMode(_slaveSelectPin, OUTPUT); // Init nSS
 
@@ -39,6 +37,12 @@ boolean RFM69::init()
 
     // Clear TX/RX Buffer
     _bufLen = 0;
+    
+    if (spiRead(RFM69_REG_10_VERSION)==0x00)
+    {
+        // Zero version number, RFM probably not connected/functioning
+        return false;
+    }
 
     return true;
 }
@@ -222,7 +226,7 @@ float RFM69::readTemp()
     // Set transceiver back to original mode
     setMode(oldMode);
     // Return processed temperature value
-    return (168.3+_temperatureFudge)-float(rawTemp);
+    return 168.3-float(rawTemp);
 }
 
 int16_t RFM69::lastRssi() {

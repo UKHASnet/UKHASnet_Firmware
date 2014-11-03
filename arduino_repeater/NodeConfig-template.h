@@ -36,5 +36,4 @@
 //************* Other config ****************/
 // RFM Temperature Sensor - Not very accurate and sometimes glitchy
 #define ENABLE_RFM_TEMPERATURE // Comment out to disable
-#define RFM_TEMP_FUDGE 0 // Initial RFM Calibration
 #define RX_TEMP_FUDGE 5.0 // Temperature offset when in RX due to self-heating

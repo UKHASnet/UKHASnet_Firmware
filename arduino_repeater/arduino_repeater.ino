@@ -14,15 +14,18 @@ Based on UKHASnet rf69_repeater by James Coxon M6JCX
 #include "NodeConfig.h"
 
 //************* Misc Setup ****************/
-float battV=0.0;
-uint8_t n, j;
+#ifdef ENABLE_BATTV_SENSOR
+ float battV=0.0;
+#endif
+uint8_t n, i, j, k, packet_len;
 uint32_t count = 1, data_interval = 2; // Initially send a couple of beacons in quick succession
 uint8_t zombie_mode; // Stores current status: 0 - Full Repeating, 1 - Low Power shutdown, (beacon only)
 uint8_t data_count = 97; // 'a'
 char data[64], string_end[] = "]";
+uint8_t buf[64], len;
+int rx_rssi;
 
-// Singleton instance of the radio
-RFM69 rf69(RFM_TEMP_FUDGE); // parameter: RFM temperature calibration offset (degrees as float)
+RFM69 rf69;
 
 #ifdef ENABLE_RFM_TEMPERATURE
 int8_t sampleRfmTemp() {
@@ -44,7 +47,7 @@ int8_t sampleRfmTemp() {
  }
 #endif
 
-int gen_Data(){
+uint8_t gen_Data(){
 
   #ifdef LOCATION_STRING
    if(data_count=='a' or data_count=='z') {
@@ -86,13 +89,12 @@ void setup()
   #ifdef ENABLE_UART_OUTPUT
    Serial.begin(9600);
   #endif
-  delay(1000);
   
   while (!rf69.init()){
-    delay(100);
+    LowPower.powerDown(SLEEP_120MS, ADC_OFF, BOD_OFF);
   }
   
-  int packet_len = gen_Data();
+  packet_len = gen_Data();
   rf69.send((uint8_t*)data, packet_len, rfm_power);
   
   #ifdef ENABLE_ZOMBIE_MODE
@@ -123,10 +125,7 @@ void setup()
        Serial.println(data[j]);
        break;
      }
-     else
-     {
-       Serial.print(data[j]);
-     }
+     Serial.print(data[j]);
    }
   #endif
 }
@@ -138,14 +137,10 @@ void loop()
   if(zombie_mode==0) {
     rf69.setMode(RFM69_MODE_RX);
     
-    for(uint8_t i=0;i<255;i++) {
-      LowPower.powerDown(SLEEP_30MS, ADC_OFF, BOD_OFF);
+    for(i=0; i<255; i++) {
+      LowPower.idle(SLEEP_30MS, ADC_OFF, TIMER2_OFF, TIMER1_OFF, TIMER0_OFF, SPI_OFF, USART0_ON, TWI_OFF);
       
       if (rf69.checkRx()) {
-        uint8_t buf[64];
-        uint8_t len = sizeof(buf);
-        int rx_rssi;
-        
         rf69.recv(buf, &len);
         
         #ifdef ENABLE_UART_OUTPUT
@@ -159,14 +154,14 @@ void loop()
         #endif
 
         // find end of packet & start of repeaters
-        int end_bracket = -1, start_bracket = -1;        
-        for (int i=0; i<len; i++) {
-          if (buf[i] == '[') {
-            start_bracket = i;
+        uint8_t end_bracket = -1, start_bracket = -1;        
+        for (k=0; k<len; k++) {
+          if (buf[k] == '[') {
+            start_bracket = k;
           }
-          else if (buf[i] == ']') {
-            end_bracket = i;
-            buf[i+1] = '\0';
+          else if (buf[k] == ']') {
+            end_bracket = k;
+            buf[k+1] = '\0';
             break;
           }
         }
@@ -177,27 +172,21 @@ void loop()
           buf[0]--;
           
           // Add the repeater ID
-          int packet_len = end_bracket + sprintf((char *)&buf[end_bracket], ",%s]", id);
+          packet_len = end_bracket + sprintf((char *)&buf[end_bracket], ",%s]", id);
 
           //random delay to try and avoid packet collision
           delay(random(50, 800));
           
           rf69.send((uint8_t*)buf, packet_len, rfm_power);
           #ifdef ENABLE_UART_OUTPUT
-           // Print repeated packet
-           for (j=0; j<packet_len; j++)
-           {
-             if(data[j]==']')
-             {
-               Serial.println(data[j]);
-               break;
+             for (j=0; j<packet_len; j++) {
+                 if(buf[j]==']'){
+                    Serial.println((char)buf[j]);
+                    break;
+                 }
+                 Serial.print((char)buf[j]);
              }
-             else
-             {
-               Serial.print(data[j]);
-             }
-           }
-          #endif
+            #endif
         }
       }
     }
@@ -216,22 +205,19 @@ void loop()
       data_count = 98; //'b'
     }
     
-    int packet_len = gen_Data();
+    packet_len = gen_Data();
     rf69.send((uint8_t*)data, packet_len, rfm_power);
     #ifdef ENABLE_UART_OUTPUT
-       // Print out own beacon packet
-       for (j=0; j<packet_len; j++)
-       {
-         if(data[j]==']')
+     // Print own Beacon Packet
+     for (j=0; j<packet_len; j++)
+     {
+         if(data[j]==']') // Check for last char in packet
          {
-           Serial.println(data[j]);
-           break;
+             Serial.println(data[j]);
+             break;
          }
-         else
-         {
-           Serial.print(data[j]);
-         }
-       }
+         Serial.print(data[j]);
+     }
     #endif
     
     data_interval = random((BEACON_INTERVAL/8), (BEACON_INTERVAL/8)+2) + count;
