@@ -167,8 +167,6 @@ int dht::_readSensor(uint8_t pin, uint8_t wakeupDelay)
             idx++;
         }
     }
-    pinMode(pin, OUTPUT);
-    digitalWrite(pin, HIGH);
 
     return DHTLIB_OK;
 }
