@@ -761,7 +761,7 @@ class RFM69
 public:
 
     /// Constructor.
-    RFM69( float tempFudge );
+    RFM69();
   
     boolean        init();
 
@@ -802,7 +802,6 @@ private:
     uint8_t             _mode;
 
     uint8_t		_slaveSelectPin;
-    float               _temperatureFudge;
 
     uint8_t             _bufLen;
     uint8_t             _buf[RFM69_MAX_MESSAGE_LEN];
