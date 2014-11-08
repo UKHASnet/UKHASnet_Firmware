@@ -13,15 +13,15 @@
 #include "nodeconfig.h"
 
 /* Private prototypes */
-int gen_data(void);
+int16_t gen_data(char *buf);
 void init(void);
 
 /* Global variables local to this compilation unit */
-static float battV=0.0;
+static float battV = 0.0;
 static uint8_t n;
 static uint32_t count = 1, data_interval = 2;
 static uint8_t data_count = 97; // 'a'
-static char data[64], string_end[] = "]";
+static char databuf[64], string_end[] = "]";
 
 /*#ifdef ENABLE_BATTV_SENSOR*/
  /*float sampleBattv() {*/
@@ -30,19 +30,19 @@ static char data[64], string_end[] = "]";
  /*}*/
 /*#endif*/
 
-int gen_data(char *buf)
+int16_t gen_data(char *buf)
 {
     char* tempStr;
     char tempStrA[12]; //make buffer large enough for 7 digits
 
 #ifdef LOCATION_STRING
     if(data_count=='a' or data_count=='z') {
-        sprintf(data, "%c%cL%s", num_repeats, data_count, LOCATION_STRING);
+        sprintf(buf, "%c%cL%s", num_repeats, data_count, LOCATION_STRING);
     } else {
-        sprintf(data, "%c%c", num_repeats, data_count);
+        sprintf(buf, "%c%c", num_repeats, data_count);
     }
 #else
-    sprintf(data, "%c%c", num_repeats, data_count);
+    sprintf(buf, "%c%c", num_repeats, data_count);
 #endif
 
     tempStr = dtostrf(temp,6,1,tempStrA);
@@ -50,7 +50,7 @@ int gen_data(char *buf)
     {
         strcpy(tempStr,&tempStr[1]);
     }
-    sprintf(data,"%sT%s",data,tempStr);
+    sprintf(buf, "%sT%s", buf, tempStr);
 
     // Humidity (DHT22)
 
@@ -62,7 +62,7 @@ int gen_data(char *buf)
     {
         strcpy(tempStr,&tempStr[1]);
     }
-    sprintf(data,"%sH%s",data,tempStr);
+    sprintf(buf, "%sH%s", buf, tempStr);
 #endif
 
 #ifdef SENSOR_VCC
@@ -80,26 +80,26 @@ int gen_data(char *buf)
     {
         strcpy(battStr,&battStr[1]);
     }
-    sprintf(data,"%sV%s",data,battStr);
+    sprintf(buf, "%sV%s", buf, battStr);
 #endif
 
-    return sprintf(data,"%s[%s]",data,id);
+    return sprintf(buf, "%s[%s]", buf, id);
 }
 
 void init(void)
 {
-    while (!rf69_init())
-    {
-        _delay_ms(100);
-    }
+    int16_t packet_len;
 
-    int packet_len = gen_Data();
-    rf69.send((uint8_t*)data, packet_len, rfm_power);
+    while (!rf69_init())
+        _delay_ms(100);
+
+    packet_len = gen_data(databuf);
+    rf69.send((uint8_t*)databuf, packet_len, rfm_power);
 }
 
 int main(void)
 {
-    int packet_len;
+    int16_t packet_len;
 
     while(1)
     {
@@ -115,8 +115,8 @@ int main(void)
             if(data_count > 122)
                 data_count = 98; //'b'
 
-            packet_len = gen_data();
-            rf69_send((uint8_t*)data, packet_len, rfm_power);
+            packet_len = gen_data(databuf);
+            rf69_send((uint8_t*)databuf, packet_len, rfm_power);
 
             data_interval = random((BEACON_INTERVAL/8), (BEACON_INTERVAL/8)+2) + count;
         }
