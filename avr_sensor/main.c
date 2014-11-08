@@ -1,12 +1,8 @@
-/*
-
-UKHASnet Dumb-Sensor Code by Phil Crump M0DNY
-
-Bare metal AVR version by Jon Sowman <jon@jonsowman.com>
-
-Based on UKHASnet rf69_repeater by James Coxon M6JCX
-
-*/
+/**
+ * UKHASnet Dumb-Sensor Code by Phil Crump M0DNY
+ * Bare metal AVR version by Jon Sowman M0JSN <jon@jonsowman.com>
+ * Based on UKHASnet rf69_repeater by James Coxon M6JCX
+ */
 
 #include <avr/io.h>
 #include <string.h>
@@ -16,7 +12,11 @@ Based on UKHASnet rf69_repeater by James Coxon M6JCX
 #include "RFM69.h"
 #include "nodeconfig.h"
 
-//************* Misc Setup ****************/
+/* Private prototypes */
+int gen_data(void);
+void init(void);
+
+/* Global variables local to this compilation unit */
 static float battV=0.0;
 static uint8_t n;
 static uint32_t count = 1, data_interval = 2;
@@ -30,7 +30,7 @@ static char data[64], string_end[] = "]";
  /*}*/
 /*#endif*/
 
-int gen_Data(void)
+int gen_data(char *buf)
 {
     char* tempStr;
     char tempStrA[12]; //make buffer large enough for 7 digits
@@ -115,7 +115,7 @@ int main(void)
             if(data_count > 122)
                 data_count = 98; //'b'
 
-            packet_len = gen_Data();
+            packet_len = gen_data();
             rf69_send((uint8_t*)data, packet_len, rfm_power);
 
             data_interval = random((BEACON_INTERVAL/8), (BEACON_INTERVAL/8)+2) + count;
