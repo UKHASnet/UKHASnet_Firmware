@@ -5,7 +5,7 @@
 #ifdef J1
  char id[] = "J1";
  #define LOCATION_STRING "51.32091,-0.29663"
- byte num_repeats = '1'; //The number of hops the message will make in the network
+ uint8_t num_repeats = '1'; //The number of hops the message will make in the network
  #define BATTV_FUDGE 1.109 // Battery Voltage ADC Calibration
  #define BEACON_INTERVAL 120 // Beacon Interval in seconds
  uint8_t rfm_power = 10; // dBm

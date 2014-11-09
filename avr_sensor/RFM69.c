@@ -11,6 +11,7 @@
 // Based on RFM69 LowPowerLabs (https://github.com/LowPowerLab/RFM69/)
 
 #include <avr/io.h>
+#include <util/delay.h>
 
 #include "RFM69.h"
 #include "RFM69Config.h"
@@ -18,12 +19,12 @@
 /**
  * Assert SS on the RFM69 for communications.
  */
-#define RFM_SS_ASSERT() do { SPI_PORT &= ~(SPI_SS) } while(0)
+#define RFM_SS_ASSERT() do { SPI_PORT &= ~(SPI_SS); } while(0)
 
 /**
  * Release SS on the RFM69 to abort or terminate comms
  */
-#define RFM_SS_DEASSERT() do { SPI_PORT |= (SPI_SS) } while(0)
+#define RFM_SS_DEASSERT() do { SPI_PORT |= (SPI_SS); } while(0)
 
 /** Track the current mode of the radio */
 static uint8_t _mode;
@@ -58,7 +59,7 @@ bool rf69_init(void)
     
     /* Set initial mode */
     _mode = RFM69_MODE_RX;
-    setMode(_mode);
+    rf69_setMode(_mode);
 
     // Zero version number, RFM probably not connected/functioning
     if(!rf69_spiRead(RFM69_REG_10_VERSION))
@@ -246,7 +247,7 @@ void rf69_send(const uint8_t* data, uint8_t len, uint8_t power)
     oldMode = _mode;
     
     // Start Transmitter
-    setMode(RFM69_MODE_TX);
+    rf69_setMode(RFM69_MODE_TX);
 
     // Set up PA
     if(power <= 17)
@@ -272,10 +273,10 @@ void rf69_send(const uint8_t* data, uint8_t len, uint8_t power)
     rf69_spiFifoWrite(data, len);
 
     // Wait for packet to be sent
-    while(!(spiRead(RFM69_REG_28_IRQ_FLAGS2) & RF_IRQFLAGS2_PACKETSENT));
+    while(!(rf69_spiRead(RFM69_REG_28_IRQ_FLAGS2) & RF_IRQFLAGS2_PACKETSENT));
 
     // Return Transceiver to original mode
-    setMode(oldMode);
+    rf69_setMode(oldMode);
 
     // If we were in high power, switch off High Power Registers
     if(power > 17)
@@ -302,8 +303,8 @@ void rf69_send(const uint8_t* data, uint8_t len, uint8_t power)
  */
 void rf69_clearFifo(void)
 {
-    setMode(RFM69_MODE_STDBY);
-    setMode(RFM69_MODE_RX);
+    rf69_setMode(RFM69_MODE_STDBY);
+    rf69_setMode(RFM69_MODE_RX);
 }
 
 /**
@@ -318,26 +319,26 @@ float rf69_readTemp(void)
     
     oldMode = _mode;
     // Set mode into Standby (required for temperature measurement)
-    setMode(RFM69_MODE_STDBY);
+    rf69_setMode(RFM69_MODE_STDBY);
 	
     // Trigger Temperature Measurement
     rf69_spiWrite(RFM69_REG_4E_TEMP1, RF_TEMP1_MEAS_START);
 
     // Check Temperature Measurement has started
-    if(!(RF_TEMP1_MEAS_RUNNING && spiRead(RFM69_REG_4E_TEMP1)))
+    if(!(RF_TEMP1_MEAS_RUNNING && rf69_spiRead(RFM69_REG_4E_TEMP1)))
         return 255.0;
 
     // Wait for Measurement to complete
-    while(RF_TEMP1_MEAS_RUNNING && spiRead(RFM69_REG_4E_TEMP1));
+    while(RF_TEMP1_MEAS_RUNNING && rf69_spiRead(RFM69_REG_4E_TEMP1));
 
     // Read raw ADC value
-    uint8_t rawTemp = rf69_spiRead(RFM69_REG_4F_TEMP2);
+    rawTemp = rf69_spiRead(RFM69_REG_4F_TEMP2);
 	
     // Set transceiver back to original mode
-    setMode(oldMode);
+    rf69_setMode(oldMode);
 
     // Return processed temperature value
-    return 168.3-float(rawTemp);
+    return 168.3-(float)rawTemp;
 }
 
 /**

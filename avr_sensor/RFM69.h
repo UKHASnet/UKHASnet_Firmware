@@ -13,6 +13,9 @@
 #ifndef __RFM69_H__
 #define __RFM69_H__
 
+#include <stdint.h>
+#include <stdbool.h>
+
 /* SPI pins and ports */
 #define SPI_DDR     DDRB
 #define SPI_PORT    PORTB

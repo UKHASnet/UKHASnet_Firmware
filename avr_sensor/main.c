@@ -5,7 +5,9 @@
  */
 
 #include <avr/io.h>
+#include <stdio.h>
 #include <string.h>
+#include <stdlib.h>
 #include <util/delay.h>
 
 #include "RFM69Config.h"
@@ -34,9 +36,10 @@ int16_t gen_data(char *buf)
 {
     char* tempStr;
     char tempStrA[12]; //make buffer large enough for 7 digits
+    float temp = 0.0;
 
 #ifdef LOCATION_STRING
-    if(data_count=='a' or data_count=='z') {
+    if(data_count=='a' || data_count=='z') {
         sprintf(buf, "%c%cL%s", num_repeats, data_count, LOCATION_STRING);
     } else {
         sprintf(buf, "%c%c", num_repeats, data_count);
@@ -94,7 +97,7 @@ void init(void)
         _delay_ms(100);
 
     packet_len = gen_data(databuf);
-    rf69.send((uint8_t*)databuf, packet_len, rfm_power);
+    rf69_send((uint8_t*)databuf, packet_len, rfm_power);
 }
 
 int main(void)
@@ -118,7 +121,7 @@ int main(void)
             packet_len = gen_data(databuf);
             rf69_send((uint8_t*)databuf, packet_len, rfm_power);
 
-            data_interval = random((BEACON_INTERVAL/8), (BEACON_INTERVAL/8)+2) + count;
+            data_interval = BEACON_INTERVAL;
         }
     }
 
