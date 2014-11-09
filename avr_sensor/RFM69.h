@@ -19,10 +19,10 @@
 /* SPI pins and ports */
 #define SPI_DDR     DDRB
 #define SPI_PORT    PORTB
-#define SPI_SS      (1<<2)
-#define SPI_MOSI    (1<<3)
-#define SPI_MISO    (1<<4)
-#define SPI_SCK     (1<<5)
+#define SPI_SS      _BV(2)
+#define SPI_MOSI    _BV(3)
+#define SPI_MISO    _BV(4)
+#define SPI_SCK     _BV(5)
 
 
 /* Write commands to the RFM have this bit set/clear ?? */

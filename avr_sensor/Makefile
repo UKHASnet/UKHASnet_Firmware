@@ -13,7 +13,7 @@
 
 DEVICE     = m168
 CLOCK      = 1000000
-PROGRAMMER = -c avrispmkII -P usb -B 10
+PROGRAMMER = -c avrispmkII -P usb -B 5
 SOURCES	   = $(wildcard *.c)
 FUSES      = -U hfuse:w:0xdf:m -U lfuse:w:0x62:m
 

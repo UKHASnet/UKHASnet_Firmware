@@ -41,15 +41,18 @@ bool rf69_init(void)
     SPI_DDR |= SPI_SS | SPI_MOSI | SPI_SCK;
     SPI_DDR &= ~(SPI_MISO);
 
+    /* Set SS high */
+    SPI_PORT |= SPI_SS;
+
     /* SPI should be mode (0,0), MSB first, double clock rate*/
-    SPCR &= ~(CPOL | CPHA);
-    SPSR |= SPI2X;
+    SPCR &= ~(_BV(CPOL) | _BV(CPHA) | _BV(DORD));
+    SPSR |= _BV(SPI2X);
 
     /* Become master */
-    SPCR |= MSTR;
+    SPCR |= _BV(MSTR);
 
     /* Finally, enable the SPI periph */
-    SPCR |= SPE;
+    SPCR |= _BV(SPE);
     
     _delay_ms(100);
     

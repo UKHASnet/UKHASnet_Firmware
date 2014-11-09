@@ -22,7 +22,7 @@ void init(void);
 static float battV = 0.0;
 static uint8_t n;
 static uint32_t count = 1, data_interval = 2;
-static uint8_t data_count = 97; // 'a'
+static uint8_t sequence_id = 97; // 'a'
 static char databuf[64], string_end[] = "]";
 
 /*#ifdef ENABLE_BATTV_SENSOR*/
@@ -39,13 +39,13 @@ int16_t gen_data(char *buf)
     float temp = 0.0;
 
 #ifdef LOCATION_STRING
-    if(data_count=='a' || data_count=='z') {
-        sprintf(buf, "%c%cL%s", num_repeats, data_count, LOCATION_STRING);
+    if(sequence_id=='a' || sequence_id=='z') {
+        sprintf(buf, "%c%cL%s", num_repeats, sequence_id, LOCATION_STRING);
     } else {
-        sprintf(buf, "%c%c", num_repeats, data_count);
+        sprintf(buf, "%c%c", num_repeats, sequence_id);
     }
 #else
-    sprintf(buf, "%c%c", num_repeats, data_count);
+    sprintf(buf, "%c%c", num_repeats, sequence_id);
 #endif
 
     tempStr = dtostrf(temp,6,1,tempStrA);
@@ -104,24 +104,29 @@ int main(void)
 {
     int16_t packet_len;
 
+    init();
+    while(1);
+
     while(1)
     {
         count++;
 
         rf69_setMode(RFM69_MODE_SLEEP);
+        /* TODO: This should sleep properly using the watchdog */
+        _delay_ms(1000);
 
-        if (count >= data_interval)
+        if(count >= data_interval)
         {
-            data_count++;
+            sequence_id++;
 
             /* Wrap the seqid */
-            if(data_count > 122)
-                data_count = 98; //'b'
+            if(sequence_id > 122)
+                sequence_id = 98; //'b'
 
             packet_len = gen_data(databuf);
             rf69_send((uint8_t*)databuf, packet_len, rfm_power);
 
-            data_interval = BEACON_INTERVAL;
+            data_interval = BEACON_INTERVAL + count;
         }
     }
 
