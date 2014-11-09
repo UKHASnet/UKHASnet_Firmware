@@ -85,6 +85,7 @@ uint8_t rf69_spiRead(const uint8_t reg)
 
     /* Read the data back */
     SPDR = 0xFF; // dummy byte
+    while(!(SPSR & (1<<SPIF)));
     data = SPDR;
 
     RFM_SS_DEASSERT();
@@ -265,13 +266,13 @@ void rf69_send(const uint8_t* data, uint8_t len, uint8_t power)
     }
 
     // Wait for PA ramp-up
-    while(!(rf69_spiRead(RFM69_REG_27_IRQ_FLAGS1) & RF_IRQFLAGS1_TXREADY)) { };
+    while(!(rf69_spiRead(RFM69_REG_27_IRQ_FLAGS1) & RF_IRQFLAGS1_TXREADY));
 
     // Throw Buffer into FIFO, packet transmission will start automatically
     rf69_spiFifoWrite(data, len);
 
     // Wait for packet to be sent
-    while(!(spiRead(RFM69_REG_28_IRQ_FLAGS2) & RF_IRQFLAGS2_PACKETSENT)) { };
+    while(!(spiRead(RFM69_REG_28_IRQ_FLAGS2) & RF_IRQFLAGS2_PACKETSENT));
 
     // Return Transceiver to original mode
     setMode(oldMode);
@@ -296,18 +297,19 @@ void rf69_send(const uint8_t* data, uint8_t len, uint8_t power)
 /**
  * Clear the FIFO in the RFM69. We do this by entering STBY mode and then
  * returing to RX mode.
+ * @warning Must only be called in RX Mode
+ * @note Apparently this works... found in HopeRF demo code
  */
 void rf69_clearFifo(void)
 {
-    // Must only be called in RX Mode
-    // Apparently this works... found in HopeRF demo code
     setMode(RFM69_MODE_STDBY);
     setMode(RFM69_MODE_RX);
 }
 
 /**
  * The RFM69 has an onboard temperature sensor, read its value
- * @returns The temperature in degrees C
+ * @warning RFM69 must be in one of the active modes for temp sensor to work.
+ * @returns The temperature in degrees C or 255.0 for failure
  */
 float rf69_readTemp(void)
 {
@@ -320,12 +322,14 @@ float rf69_readTemp(void)
 	
     // Trigger Temperature Measurement
     rf69_spiWrite(RFM69_REG_4E_TEMP1, RF_TEMP1_MEAS_START);
+
     // Check Temperature Measurement has started
-    if(!(RF_TEMP1_MEAS_RUNNING && spiRead(RFM69_REG_4E_TEMP1))){
+    if(!(RF_TEMP1_MEAS_RUNNING && spiRead(RFM69_REG_4E_TEMP1)))
         return 255.0;
-    }
+
     // Wait for Measurement to complete
-    while(RF_TEMP1_MEAS_RUNNING && spiRead(RFM69_REG_4E_TEMP1)) { };
+    while(RF_TEMP1_MEAS_RUNNING && spiRead(RFM69_REG_4E_TEMP1));
+
     // Read raw ADC value
     uint8_t rawTemp = rf69_spiRead(RFM69_REG_4F_TEMP2);
 	
@@ -338,7 +342,8 @@ float rf69_readTemp(void)
 
 /**
  * Get the last RSSI value from the RFM69
- * @returns The last RSSI in some units
+ * @warning Must only be called when the RFM69 is in rx mode
+ * @returns The last RSSI in some units, or 0 for failure
  */
 int16_t rf69_sampleRssi(void)
 {
@@ -346,16 +351,13 @@ int16_t rf69_sampleRssi(void)
 
     // Must only be called in RX mode
     if(_mode != RFM69_MODE_RX)
-    {
-        // Not sure what happens otherwise, so check this
         return 0;
-    }
 
     // Trigger RSSI Measurement
     rf69_spiWrite(RFM69_REG_23_RSSI_CONFIG, RF_RSSI_START);
 
     // Wait for Measurement to complete
-    while(!(RF_RSSI_DONE && rf69_spiRead(RFM69_REG_23_RSSI_CONFIG))) { };
+    while(!(RF_RSSI_DONE && rf69_spiRead(RFM69_REG_23_RSSI_CONFIG)));
 
     // Read, store in _lastRssi and return RSSI Value
     lastRssi = -(rf69_spiRead(RFM69_REG_24_RSSI_VALUE)/2);

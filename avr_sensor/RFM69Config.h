@@ -1,9 +1,21 @@
-#ifndef RFM69Config_h
-#define RFM69Config_h
+// RFM69Config.h
+//
+// Ported to Arduino 2014 James Coxon
+//
+// Ported to bare metal AVR 2014 Jon Sowman
+//
+// Copyright (C) 2014 Phil Crump
+// Copyright (C) 2014 Jon Sowman <jon@jonsowman.com>
+//
+// Based on RF22 Copyright (C) 2011 Mike McCauley ported to mbed by Karl Zweimueller
+// Based on RFM69 LowPowerLabs (https://github.com/LowPowerLab/RFM69/)
+
+#ifndef __RFM69CONFIG_H__
+#define __RFM69CONFIG_H__
 
 #include "RFM69.h"
 
-/*PROGMEM */ static const uint8_t CONFIG[][2] =
+static const uint8_t CONFIG[][2] =
 {
     { RFM69_REG_01_OPMODE,      RF_OPMODE_SEQUENCER_ON | RF_OPMODE_LISTEN_OFF | RFM69_MODE_RX },
     { RFM69_REG_02_DATA_MODUL,  RF_DATAMODUL_DATAMODE_PACKET | RF_DATAMODUL_MODULATIONTYPE_FSK | RF_DATAMODUL_MODULATIONSHAPING_00 },
@@ -55,6 +67,5 @@
     {255, 0}
   };
 
-#endif
-
+#endif /* __RFM69CONFIG_H__ */
 

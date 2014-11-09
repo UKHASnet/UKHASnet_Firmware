@@ -1,13 +1,14 @@
 // RFM69.h
-// Author: Phil Crump (phildcrump@gmail.com)
+//
+// Ported to Arduino 2014 James Coxon
+//
+// Ported to bare metal AVR 2014 Jon Sowman
+//
 // Copyright (C) 2014 Phil Crump
+// Copyright (C) 2014 Jon Sowman <jon@jonsowman.com>
 //
-// Modified Jon Sowman <jon@jonsowman.com>
-// Copyright (C) 2014 Jon SOwman
-//
-// Based on RF22.h
-// Author: Mike McCauley (mikem@open.com.au)
-// Copyright (C) 2011 Mike McCauley
+// Based on RF22 Copyright (C) 2011 Mike McCauley ported to mbed by Karl Zweimueller
+// Based on RFM69 LowPowerLabs (https://github.com/LowPowerLab/RFM69/)
 
 #ifndef __RFM69_H__
 #define __RFM69_H__

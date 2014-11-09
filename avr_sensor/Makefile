@@ -1,6 +1,6 @@
 # Name: Makefile
-# Project: SunJar
-# Author: Jon Sowman <jon@hexoc.com> 
+# Project: AVR UKHASNet Project
+# Author: Jon Sowman <jon@jonsowman.com> 
 
 # DEVICE ....... The AVR device you compile for
 # CLOCK ........ Target AVR clock rate in Hertz
@@ -22,8 +22,8 @@ FUSES      = -U hfuse:w:0xdf:m -U lfuse:w:0x62:m
 OBJECTS = $(SOURCES:.c=.o)
 AVRDUDE = avrdude $(PROGRAMMER) -p $(DEVICE) -C /etc/avrdude.conf
 
-# Disable warning of strict-aliasing since uIP type-puns
-COMPILE = avr-gcc -Wall -Os -fno-strict-aliasing -gdwarf-2 -std=gnu99 -DF_CPU=$(CLOCK) -mmcu=atmega168
+# Compiler flags. Optimise for code size. Allow C99 standards.
+COMPILE = avr-gcc -Wall -Os -gdwarf-2 -std=gnu99 -DF_CPU=$(CLOCK) -mmcu=atmega168
 
 # symbolic targets:
 all:	main.hex
