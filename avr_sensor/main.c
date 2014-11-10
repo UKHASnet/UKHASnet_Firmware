@@ -36,7 +36,7 @@ int16_t gen_data(char *buf)
 {
     char* tempStr;
     char tempStrA[12]; //make buffer large enough for 7 digits
-    float temp = 0.0;
+    int8_t temp = 0;
 
 #ifdef LOCATION_STRING
     if(sequence_id=='a' || sequence_id=='z') {
@@ -48,12 +48,8 @@ int16_t gen_data(char *buf)
     sprintf(buf, "%c%c", num_repeats, sequence_id);
 #endif
 
-    tempStr = dtostrf(temp,6,1,tempStrA);
-    while( (strlen(tempStr) > 0) && (tempStr[0] == 32) )
-    {
-        strcpy(tempStr,&tempStr[1]);
-    }
-    sprintf(buf, "%sT%s", buf, tempStr);
+    temp = rf69_readTemp();
+    sprintf(buf, "%sT%i.0", buf, temp);
 
     // Humidity (DHT22)
 
@@ -105,7 +101,6 @@ int main(void)
     int16_t packet_len;
 
     init();
-    while(1);
 
     while(1)
     {

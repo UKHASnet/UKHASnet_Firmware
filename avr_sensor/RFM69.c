@@ -315,7 +315,7 @@ void rf69_clearFifo(void)
  * @warning RFM69 must be in one of the active modes for temp sensor to work.
  * @returns The temperature in degrees C or 255.0 for failure
  */
-float rf69_readTemp(void)
+int8_t rf69_readTemp(void)
 {
     // Store current transceiver mode
     uint8_t oldMode, rawTemp;
@@ -328,10 +328,11 @@ float rf69_readTemp(void)
     rf69_spiWrite(RFM69_REG_4E_TEMP1, RF_TEMP1_MEAS_START);
 
     // Check Temperature Measurement has started
-    if(!(RF_TEMP1_MEAS_RUNNING && rf69_spiRead(RFM69_REG_4E_TEMP1)))
-        return 255.0;
+    /*if(!(RF_TEMP1_MEAS_RUNNING && rf69_spiRead(RFM69_REG_4E_TEMP1)))*/
+        /*return 255.0;*/
 
     // Wait for Measurement to complete
+    _delay_ms(1);
     while(RF_TEMP1_MEAS_RUNNING && rf69_spiRead(RFM69_REG_4E_TEMP1));
 
     // Read raw ADC value
@@ -341,7 +342,7 @@ float rf69_readTemp(void)
     rf69_setMode(oldMode);
 
     // Return processed temperature value
-    return 168.3-(float)rawTemp;
+    return 164 - (int8_t)rawTemp;
 }
 
 /**

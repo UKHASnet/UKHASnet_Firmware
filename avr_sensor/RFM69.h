@@ -781,7 +781,7 @@ void rf69_spiFifoWrite(const uint8_t* src, uint8_t len);
 void rf69_setMode(const uint8_t newMode);
 void rf69_send(const uint8_t* data, uint8_t len, uint8_t power);
 void rf69_clearFifo(void);
-float rf69_readTemp(void);
+int8_t rf69_readTemp(void);
 int16_t rf69_sampleRssi(void);
 
 #endif /* __RFM69_H__ */
