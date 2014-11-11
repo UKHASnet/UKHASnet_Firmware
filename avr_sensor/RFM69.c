@@ -256,8 +256,8 @@ void rf69_send(const uint8_t* data, uint8_t len, uint8_t power)
     if(power <= 17)
     {
         // Set PA Level
-        paLevel = power + 14;
-	rf69_spiWrite(RFM69_REG_11_PA_LEVEL, RF_PALEVEL_PA0_OFF | RF_PALEVEL_PA1_ON | RF_PALEVEL_PA2_ON | paLevel);        
+        paLevel = power + 28;
+	rf69_spiWrite(RFM69_REG_11_PA_LEVEL, RF_PALEVEL_PA0_ON | RF_PALEVEL_PA1_OFF | RF_PALEVEL_PA2_OFF | paLevel);        
     } else {
         // Disable Over Current Protection
         rf69_spiWrite(RFM69_REG_13_OCP, RF_OCP_OFF);
@@ -342,7 +342,7 @@ int8_t rf69_readTemp(void)
     rf69_setMode(oldMode);
 
     // Return processed temperature value
-    return 164 - (int8_t)rawTemp;
+    return 161 - (int8_t)rawTemp;
 }
 
 /**

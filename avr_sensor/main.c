@@ -15,6 +15,7 @@
 #include "nodeconfig.h"
 
 /* Private prototypes */
+float get_batt_voltage(void);
 int16_t gen_data(char *buf);
 void init(void);
 
@@ -31,6 +32,40 @@ static char databuf[64], string_end[] = "]";
    /*return ((float)analogRead(BATTV_PIN)*1.1*5*BATTV_FUDGE)/1023.0;*/
  /*}*/
 /*#endif*/
+
+/**
+ * Measure the battery voltage
+ * @returns The voltage of the battery in mV
+ */
+float get_batt_voltage(void)
+{
+    uint16_t res;
+
+    /* Power up the ADC */
+    PRR &= ~(_BV(PRADC));
+
+    /* Set channel to PC0 */
+    ADMUX = BATTV_PIN;
+
+    /* Set internal 1V1 reference */
+    ADMUX |= _BV(REFS1) | _BV(REFS0);
+
+    /* Get 125kHz ADC clock from a 1MHz core clock by dividing by 8 */
+    ADCSRA |= _BV(ADPS1) | _BV(ADPS0);
+
+    /* Enable ADC */
+    ADCSRA |= _BV(ADEN);
+
+    /* Start conv, wait until done, get result */
+    ADCSRA |= _BV(ADSC);
+    while(!(ADCSRA & _BV(ADIF)));
+    res = ADC;
+
+    /* Power down the ADC */
+    ADCSRA &= ~_BV(ADEN);
+
+    return (float)(res * 0.001074219 * BATTV_SCALEFACTOR * BATTV_FUDGE);
+}
 
 int16_t gen_data(char *buf)
 {
@@ -71,7 +106,7 @@ int16_t gen_data(char *buf)
     // Battery Voltage
 
 #ifdef ENABLE_BATTV_SENSOR
-    battV = sampleBattv();
+    battV = get_batt_voltage();
     char* battStr;
     char tempStrB[14]; //make buffer large enough for 7 digits
     battStr = dtostrf(battV,7,2,tempStrB);
