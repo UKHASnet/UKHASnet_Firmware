@@ -21,21 +21,13 @@ void init(void);
 
 /* Global variables local to this compilation unit */
 static float battV = 0.0;
-static uint8_t n;
 static uint32_t count = 1, data_interval = 2;
 static uint8_t sequence_id = 97; // 'a'
-static char databuf[64], string_end[] = "]";
-
-/*#ifdef ENABLE_BATTV_SENSOR*/
- /*float sampleBattv() {*/
-   /*// External 5:1 Divider*/
-   /*return ((float)analogRead(BATTV_PIN)*1.1*5*BATTV_FUDGE)/1023.0;*/
- /*}*/
-/*#endif*/
+static char databuf[64];
 
 /**
- * Measure the battery voltage
- * @returns The voltage of the battery in mV
+ * Measure the battery voltage.
+ * @returns The voltage of the battery in Volts
  */
 float get_batt_voltage(void)
 {
@@ -69,43 +61,23 @@ float get_batt_voltage(void)
 
 int16_t gen_data(char *buf)
 {
-    char* tempStr;
-    char tempStrA[12]; //make buffer large enough for 7 digits
     int8_t temp = 0;
 
 #ifdef LOCATION_STRING
     if(sequence_id=='a' || sequence_id=='z') {
-        sprintf(buf, "%c%cL%s", num_repeats, sequence_id, LOCATION_STRING);
+        sprintf(buf, "%c%cL%s", NUM_REPEATS, sequence_id, LOCATION_STRING);
     } else {
-        sprintf(buf, "%c%c", num_repeats, sequence_id);
+        sprintf(buf, "%c%c", NUM_REPEATS, sequence_id);
     }
 #else
-    sprintf(buf, "%c%c", num_repeats, sequence_id);
+    sprintf(buf, "%c%c", NUM_REPEATS, sequence_id);
 #endif
 
     temp = rf69_readTemp();
     sprintf(buf, "%sT%i.0", buf, temp);
 
-    // Humidity (DHT22)
-
-#ifdef DHT22
-    float humid = DHT.humidity;
-
-    tempStr = dtostrf(humid,6,1,tempStrA);
-    while( (strlen(tempStr) > 0) && (tempStr[0] == 32) )
-    {
-        strcpy(tempStr,&tempStr[1]);
-    }
-    sprintf(buf, "%sH%s", buf, tempStr);
-#endif
-
-#ifdef SENSOR_VCC
-    digitalWrite(8, LOW);
-#endif
-
     // Battery Voltage
-
-#ifdef ENABLE_BATTV_SENSOR
+#if ENABLE_BATTV_SENSOR == 1
     battV = get_batt_voltage();
     char* battStr;
     char tempStrB[14]; //make buffer large enough for 7 digits
@@ -117,7 +89,7 @@ int16_t gen_data(char *buf)
     sprintf(buf, "%sV%s", buf, battStr);
 #endif
 
-    return sprintf(buf, "%s[%s]", buf, id);
+    return sprintf(buf, "%s[%s]", buf, NODE_ID);
 }
 
 void init(void)
@@ -128,7 +100,7 @@ void init(void)
         _delay_ms(100);
 
     packet_len = gen_data(databuf);
-    rf69_send((uint8_t*)databuf, packet_len, rfm_power);
+    rf69_send((uint8_t*)databuf, packet_len, RFM_POWER);
 }
 
 int main(void)
@@ -154,7 +126,7 @@ int main(void)
                 sequence_id = 98; //'b'
 
             packet_len = gen_data(databuf);
-            rf69_send((uint8_t*)databuf, packet_len, rfm_power);
+            rf69_send((uint8_t*)databuf, packet_len, RFM_POWER);
 
             data_interval = BEACON_INTERVAL + count;
         }
