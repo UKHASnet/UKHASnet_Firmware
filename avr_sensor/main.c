@@ -65,12 +65,12 @@ int16_t gen_data(char *buf)
 
 #ifdef LOCATION_STRING
     if(sequence_id=='a' || sequence_id=='z') {
-        sprintf(buf, "%c%cL%s", NUM_REPEATS, sequence_id, LOCATION_STRING);
+        sprintf(buf, "%u%cL%s", NUM_REPEATS, sequence_id, LOCATION_STRING);
     } else {
-        sprintf(buf, "%c%c", NUM_REPEATS, sequence_id);
+        sprintf(buf, "%u%c", NUM_REPEATS, sequence_id);
     }
 #else
-    sprintf(buf, "%c%c", NUM_REPEATS, sequence_id);
+    sprintf(buf, "%u%c", NUM_REPEATS, sequence_id);
 #endif
 
     temp = rf69_readTemp();
@@ -109,11 +109,11 @@ int main(void)
 
     init();
 
+    rf69_setMode(RFM69_MODE_SLEEP);
+
     while(1)
     {
         count++;
-
-        rf69_setMode(RFM69_MODE_SLEEP);
         /* TODO: This should sleep properly using the watchdog */
         _delay_ms(1000);
 
