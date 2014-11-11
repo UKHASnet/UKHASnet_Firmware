@@ -318,7 +318,7 @@ void rf69_clearFifo(void)
 int8_t rf69_readTemp(void)
 {
     // Store current transceiver mode
-    uint8_t oldMode, rawTemp;
+    uint8_t oldMode, rawTemp, timeout;
     
     oldMode = _mode;
     // Set mode into Standby (required for temperature measurement)
@@ -328,12 +328,23 @@ int8_t rf69_readTemp(void)
     rf69_spiWrite(RFM69_REG_4E_TEMP1, RF_TEMP1_MEAS_START);
 
     // Check Temperature Measurement has started
-    /*if(!(RF_TEMP1_MEAS_RUNNING & rf69_spiRead(RFM69_REG_4E_TEMP1)))*/
-        /*return 255.0;*/
+    timeout = 0;
+    while(!(RF_TEMP1_MEAS_RUNNING & rf69_spiRead(RFM69_REG_4E_TEMP1)))
+    {
+        if(++timeout > 10)
+            return -1;
+        rf69_spiWrite(RFM69_REG_4E_TEMP1, RF_TEMP1_MEAS_START);
+        _delay_ms(1);
+    }
 
     // Wait for Measurement to complete
-    _delay_ms(1);
-    while(RF_TEMP1_MEAS_RUNNING & rf69_spiRead(RFM69_REG_4E_TEMP1));
+    timeout = 0;
+    while(RF_TEMP1_MEAS_RUNNING & rf69_spiRead(RFM69_REG_4E_TEMP1))
+    {
+        if(++timeout > 10)
+            return -1;
+        _delay_ms(1);
+    }
 
     // Read raw ADC value
     rawTemp = rf69_spiRead(RFM69_REG_4F_TEMP2);
