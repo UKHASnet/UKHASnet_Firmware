@@ -323,7 +323,7 @@ int8_t rf69_readTemp(void)
     oldMode = _mode;
     // Set mode into Standby (required for temperature measurement)
     rf69_setMode(RFM69_MODE_STDBY);
-	
+
     // Trigger Temperature Measurement
     rf69_spiWrite(RFM69_REG_4E_TEMP1, RF_TEMP1_MEAS_START);
 
@@ -331,19 +331,19 @@ int8_t rf69_readTemp(void)
     timeout = 0;
     while(!(RF_TEMP1_MEAS_RUNNING & rf69_spiRead(RFM69_REG_4E_TEMP1)))
     {
-        if(++timeout > 10)
-            return -1;
-        rf69_spiWrite(RFM69_REG_4E_TEMP1, RF_TEMP1_MEAS_START);
         _delay_ms(1);
+        if(++timeout > 50)
+            return -127.0;
+        rf69_spiWrite(RFM69_REG_4E_TEMP1, RF_TEMP1_MEAS_START);
     }
 
     // Wait for Measurement to complete
     timeout = 0;
     while(RF_TEMP1_MEAS_RUNNING & rf69_spiRead(RFM69_REG_4E_TEMP1))
     {
-        if(++timeout > 10)
-            return -1;
         _delay_ms(1);
+        if(++timeout > 10)
+            return -127.0;
     }
 
     // Read raw ADC value
