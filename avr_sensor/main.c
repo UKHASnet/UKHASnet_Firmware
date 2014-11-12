@@ -5,6 +5,9 @@
  */
 
 #include <avr/io.h>
+#include <avr/wdt.h>
+#include <avr/interrupt.h>
+#include <avr/sleep.h>
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
@@ -55,6 +58,7 @@ float get_batt_voltage(void)
 
     /* Power down the ADC */
     ADCSRA &= ~_BV(ADEN);
+    PRR |= _BV(PRADC);
 
     return (float)(res * 0.001074219 * BATTV_SCALEFACTOR * BATTV_FUDGE);
 }
@@ -96,7 +100,10 @@ void init(void)
 {
     int16_t packet_len;
 
-    while (!rf69_init())
+    /* Turn off peripherals that we don't use */
+    PRR |= _BV(PRTWI) | _BV(PRTIM2) | _BV(PRTIM1) | _BV(PRTIM0) | _BV(PRUSART0);
+
+    while(!rf69_init())
         _delay_ms(100);
 
     packet_len = gen_data(databuf);
@@ -117,8 +124,14 @@ int main(void)
     while(1)
     {
         count++;
-        /* TODO: This should sleep properly using the watchdog */
-        _delay_ms(1000);
+        /* Enable the watchdog and sleep for 8 seconds */
+        wdt_enable(WDTO_8S);
+        WDTCSR |= (1 << WDIE);
+        set_sleep_mode(SLEEP_MODE_PWR_DOWN);
+        sleep_enable();
+        sei();
+        sleep_cpu();
+        sleep_disable();
 
         if(count >= data_interval)
         {
@@ -136,4 +149,12 @@ int main(void)
     }
 
     return 0;
+}
+
+/**
+ * Watchdog interrupt
+ */
+ISR(WDT_vect)
+{
+    wdt_disable();
 }
