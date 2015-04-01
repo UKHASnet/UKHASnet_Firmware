@@ -16,6 +16,7 @@
  #define ENABLE_ZOMBIE_MODE // Comment this out to disable
  #define ZOMBIE_THRESHOLD 3.65 // Lower Voltage Threshold
  #define ENABLE_UART_OUTPUT // UART output of packets and rssi, used for gateways
+ #define UART_BAUDRATE 9600 // UART baudrate
 #endif
 
 #ifdef XXXX
