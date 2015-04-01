@@ -80,7 +80,7 @@ uint8_t gen_Data(){
   
   #if defined(ENABLE_BATTV_SENSOR) || defined(ENABLE_INTERNAL_BATTV_SENSOR)
    battV = sampleBattv();
-   char * battStr;
+   char* battStr;
    char tempStrB[14]; //make buffer large enough for 7 digits
    battStr = dtostrf(battV,7,2,tempStrB);
    while( (strlen(battStr) > 0) && (battStr[0] == 32) )
