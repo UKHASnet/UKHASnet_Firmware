@@ -87,7 +87,11 @@ void setup()
   analogReference(INTERNAL); // 1.1V ADC reference
   randomSeed(analogRead(6));
   #ifdef ENABLE_UART_OUTPUT
-   Serial.begin(9600);
+   #ifdef UART_BAUDRATE
+    Serial.begin(UART_BAUDRATE);
+   #else 
+    Serial.begin(9600);
+   #endif
   #endif
   
   while (!rf69.init()){
