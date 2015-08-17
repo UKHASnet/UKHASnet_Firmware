@@ -4,21 +4,21 @@
 //************* Node-specific config ****************/
 #ifdef JH
     /** The string identifier of the node */
-    #define NODE_ID                 "SM2"
+    #define NODE_ID                 "JH"
 
     /** The location of this node in decimal degrees. Comment out to disable
      * transmission of the location of this node */
-    /*#define LOCATION_STRING         "51.10000,-0.10000"*/
+    #define LOCATION_STRING         "51.32091,-0.29663"
 
     /** The message will make this many hops in the network. */
-    #define NUM_REPEATS             0
+    #define NUM_REPEATS             1
 
     /** The microcontroller ADC and/or the potential divider are inaccurate.
      * Calibrate them using this value */
-    #define BATTV_FUDGE             1.142
+    #define BATTV_FUDGE             1.11
 
     /** The node will transmit a packet with this interval (in seconds) */
-    #define BEACON_INTERVAL         10
+    #define BEACON_INTERVAL         23
 
     /** Set the RFM69 radio to this power level (given in dBm). Note that non
      * -HW models support only up to +13dBm */

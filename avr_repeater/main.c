@@ -13,8 +13,8 @@
 #include <stdlib.h>
 #include <util/delay.h>
 
-#include "RFM69Config.h"
-#include "RFM69.h"
+#include "ukhasnet-rfm69.h"
+#include "ukhasnet-rfm69-config.h"
 #include "nodeconfig.h"
 
 /* Private prototypes */
