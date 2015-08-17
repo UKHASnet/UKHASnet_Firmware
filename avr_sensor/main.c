@@ -15,7 +15,6 @@
 
 #include "ukhasnet-rfm69.h"
 
-#include "spi_conf.h"
 #include "nodeconfig.h"
 
 /* Private prototypes */
