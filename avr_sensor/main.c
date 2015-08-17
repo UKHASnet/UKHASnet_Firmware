@@ -15,6 +15,8 @@
 
 #include "RFM69Config.h"
 #include "RFM69.h"
+
+#include "spi_conf.h"
 #include "nodeconfig.h"
 
 /* Private prototypes */
