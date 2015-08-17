@@ -13,7 +13,6 @@
 #include <stdlib.h>
 #include <util/delay.h>
 
-#include "ukhasnet-rfm69-config.h"
 #include "ukhasnet-rfm69.h"
 
 #include "spi_conf.h"
