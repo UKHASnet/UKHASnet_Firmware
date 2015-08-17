@@ -16,7 +16,7 @@
  * Based on RFM69 LowPowerLabs (https://github.com/LowPowerLab/RFM69/)
  */
 
-#include "RFM69.h"
+#include "ukhasnet-rfm69.h"
 #include "spi_conf.h"
 
 /**
