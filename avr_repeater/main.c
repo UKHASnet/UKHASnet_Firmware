@@ -29,6 +29,7 @@ static uint32_t count = 1, data_interval = 2;
 static uint8_t sequence_id = 97; // 'a'
 static char databuf[64];
 static uint8_t buf[64], len;
+static int16_t lastrssi;
 static uint8_t zombie_mode = 0; // Stores current status: 0 - Full Repeating, 1 - Low Power shutdown, (beacon only)
 uint16_t getRandBetween(uint16_t lower, uint16_t upper);
 void enableRepeat(void);
@@ -178,8 +179,8 @@ void loop(void)
       wdt_reset();
       //LowPower.idle(SLEEP_30MS, ADC_OFF, TIMER2_OFF, TIMER1_OFF, TIMER0_OFF, SPI_OFF, USART0_ON, TWI_OFF);
       _delay_ms(30);
-      if (rf69_checkRx()) {
-        rf69_recv(buf, &len);
+      if (rf69_receive(buf, &len, &lastrssi))
+      {
         
         /*#ifdef ENABLE_UART_OUTPUT
          rx_rssi = rf69_lastRssi();
