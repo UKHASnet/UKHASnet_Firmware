@@ -19,11 +19,12 @@ FUSES      = -U hfuse:w:0xdf:m -U lfuse:w:0x62:m
 
 # End configuration
 
+INCLUDE = ukhasnet-rfm69
 OBJECTS = $(SOURCES:.c=.o)
 AVRDUDE = avrdude $(PROGRAMMER) -p $(DEVICE) -C /etc/avrdude.conf
 
 # Compiler flags. Optimise for code size. Allow C99 standards.
-COMPILE = avr-gcc -Wall -Os -gdwarf-2 -std=gnu99 -DF_CPU=$(CLOCK) -mmcu=atmega168
+COMPILE = avr-gcc -Wall -Os -gdwarf-2 -std=gnu99 -DF_CPU=$(CLOCK) -mmcu=atmega168 -I $(INCLUDE)
 
 # symbolic targets:
 all:	main.hex
