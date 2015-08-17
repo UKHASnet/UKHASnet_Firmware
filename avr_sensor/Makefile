@@ -1,4 +1,4 @@
-# Name: Makefile
+# Name: UKHASNet AVR Sensor 
 # Project: AVR UKHASNet Project
 # Author: Jon Sowman <jon@jonsowman.com> 
 
@@ -11,20 +11,21 @@
 #                is connected.
 # FUSES ........ Parameters for avrdude to flash the fuses appropriately.
 
+
+INCLUDE = ukhasnet-rfm69
+
 DEVICE     = m168
 CLOCK      = 1000000
 PROGRAMMER = -c avrispmkII -P usb -B 5
-SOURCES	   = $(wildcard *.c)
+SOURCES	   = $(wildcard *.c) $(wildcard $(INCLUDE)/*.c)
 FUSES      = -U hfuse:w:0xdf:m -U lfuse:w:0x62:m
 
 # End configuration
-
-INCLUDE = ukhasnet-rfm69
 OBJECTS = $(SOURCES:.c=.o)
 AVRDUDE = avrdude $(PROGRAMMER) -p $(DEVICE) -C /etc/avrdude.conf
 
 # Compiler flags. Optimise for code size. Allow C99 standards.
-COMPILE = avr-gcc -Wall -Os -gdwarf-2 -std=gnu99 -DF_CPU=$(CLOCK) -mmcu=atmega168 -I $(INCLUDE)
+COMPILE = avr-gcc -Wall -Os -gdwarf-2 -std=gnu99 -DF_CPU=$(CLOCK) -mmcu=atmega168 -I ./$(INCLUDE)
 
 # symbolic targets:
 all:	main.hex
