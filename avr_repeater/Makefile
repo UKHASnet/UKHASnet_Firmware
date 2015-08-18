@@ -14,13 +14,12 @@
 
 # Where the RFM69 library (ukhasnet-rfm69) is located relative to here
 RFMLIBDIR  = ukhasnet-rfm69
-RFMLIB     = ukhasnet-rfm69
 
 # Configure the following settings according to the device in use
 DEVICE     = m328p
 CLOCK      = 8000000
 PROGRAMMER = -c avrispmkII -P usb -B 5
-SOURCES	   = $(wildcard *.c)
+SOURCES	   = $(wildcard *.c) $(wildcard $(RFMLIBDIR)/*.c)
 FUSES      = -U hfuse:w:0xdf:m -U lfuse:w:0x62:m
 
 # End configuration
@@ -28,7 +27,7 @@ OBJECTS = $(SOURCES:.c=.o)
 AVRDUDE = avrdude $(PROGRAMMER) -p $(DEVICE) -C /etc/avrdude.conf
 
 # Compiler flags. Optimise for code size. Allow C99 standards.
-COMPILE = avr-gcc -Wall -Os -gdwarf-2 -std=gnu99 -DF_CPU=$(CLOCK) -mmcu=atmega328p -I ./$(RFMLIBDIR) -L ./$(RFMLIBDIR)
+COMPILE = avr-gcc -Wall -Os -gdwarf-2 -std=gnu99 -DF_CPU=$(CLOCK) -mmcu=atmega328p -I ./$(RFMLIBDIR) 
 
 # symbolic targets:
 all:	main.hex
@@ -67,7 +66,7 @@ clean:
 
 # file targets:
 main.elf: $(OBJECTS)
-	$(COMPILE) -o main.elf $(OBJECTS) -l$(RFMLIB)
+	$(COMPILE) -o main.elf $(OBJECTS)
 	avr-size -C --mcu=${DEVICE} $@
 
 main.hex: main.elf
