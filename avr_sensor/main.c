@@ -77,7 +77,7 @@ int16_t gen_data(char *buf)
     sprintf(buf, "%u%c", NUM_REPEATS, sequence_id);
 #endif
 
-    temp = rf69_readTemp();
+    rf69_readTemp(&temp);
     sprintf(buf, "%sT%i.0", buf, temp);
 
     // Battery Voltage
@@ -107,7 +107,7 @@ void init(void)
         _delay_ms(100);
 
     packet_len = gen_data(databuf);
-    rf69_send((uint8_t*)databuf, packet_len, RFM_POWER);
+    rf69_send((rfm_reg_t *)databuf, packet_len, RFM_POWER);
 }
 
 int main(void)
@@ -142,7 +142,7 @@ int main(void)
                 sequence_id = 98; //'b'
 
             packet_len = gen_data(databuf);
-            rf69_send((uint8_t*)databuf, packet_len, RFM_POWER);
+            rf69_send((rfm_reg_t *)databuf, packet_len, RFM_POWER);
 
             data_interval = BEACON_INTERVAL + count;
         }

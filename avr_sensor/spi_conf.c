@@ -25,7 +25,7 @@
  * RFM69, and become a master.
  * @returns True on success, false on failure.
  */
-bool rfm69_init(void)
+rfm_status_t rfm69_init(void)
 {
     /* Set up the SPI IO as appropriate */
     SPI_DDR |= SPI_SS | SPI_MOSI | SPI_SCK;
@@ -55,11 +55,12 @@ bool rfm69_init(void)
  * @param out The byte to be sent
  * @returns The byte received
  */
-uint8_t spi_exchange_single(uint8_t out)
+rfm_status_t spi_exchange_single(const rfm_reg_t out, rfm_reg_t* in)
 {
     SPDR = out;
     while(!(SPSR & (1<<SPIF)));
-    return SPDR;
+    *in = SPDR;
+    return RFM_OK;
 }
 
 /**

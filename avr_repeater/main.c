@@ -28,14 +28,17 @@ static float battV = 0.0;
 static uint32_t count = 1, data_interval = 2;
 static uint8_t sequence_id = 97; // 'a'
 static char databuf[64];
-static uint8_t buf[64], len;
+static rfm_reg_t buf[64], len;
 static int16_t lastrssi;
 static uint8_t zombie_mode = 0; // Stores current status: 0 - Full Repeating, 1 - Low Power shutdown, (beacon only)
+
+/* Private prototypes */
 uint16_t getRandBetween(uint16_t lower, uint16_t upper);
 void enableRepeat(void);
 int16_t gen_data(char *buf);
 void loop(void);
 void sendPacket(void);
+
 /**
  * Measure the battery voltage.
  * @returns The voltage of the battery in Volts
@@ -85,7 +88,7 @@ int16_t gen_data(char *buf)
     sprintf(buf, "%u%c", NUM_REPEATS, sequence_id);
 #endif
 
-    temp = rf69_readTemp();
+    rf69_readTemp(&temp);
     sprintf(buf, "%sT%i.0", buf, temp);
 
     // Battery Voltage
@@ -115,12 +118,11 @@ void init(void)
     sendPacket();
 
     enableRepeat();
-
 }
 
 void sendPacket(void){
     if(sequence_id > 122){
-      sequence_id = 98; //'b'
+        sequence_id = 98; //'b'
     }
     packet_len = gen_data(databuf);
     rf69_send((uint8_t*)databuf, packet_len, RFM_POWER);
@@ -131,25 +133,25 @@ void sendPacket(void){
 }
 
 void enableRepeat(void){
-    
+
 #ifdef ENABLE_ZOMBIE_MODE
-   if(battV > ZOMBIE_THRESHOLD) {
-     rf69_setMode(RFM69_MODE_RX);
-     zombie_mode=0;
-     #ifdef SENSITIVE_RX
-      rf69_SetLnaMode(RF_TESTLNA_SENSITIVE);
-     #endif
-   } else {
-     rf69_setMode(RFM69_MODE_SLEEP);
-     zombie_mode=1;
-   }
-  #else
-   rf69_setMode(RFM69_MODE_RX);
-   zombie_mode=0;
-   #ifdef SENSITIVE_RX
+    if(battV > ZOMBIE_THRESHOLD) {
+        rf69_setMode(RFM69_MODE_RX);
+        zombie_mode=0;
+#ifdef SENSITIVE_RX
+        rf69_SetLnaMode(RF_TESTLNA_SENSITIVE);
+#endif
+    } else {
+        rf69_setMode(RFM69_MODE_SLEEP);
+        zombie_mode=1;
+    }
+#else
+    rf69_setMode(RFM69_MODE_RX);
+    zombie_mode=0;
+#ifdef SENSITIVE_RX
     rf69_SetLnaMode(RF_TESTLNA_SENSITIVE);
-   #endif
-  #endif
+#endif
+#endif
 }
 
 int main(void)
@@ -171,110 +173,115 @@ int main(void)
 
 void loop(void)
 {
-  count++;
-  wdt_reset();
-  if(zombie_mode==0) {
-    rf69_setMode(RFM69_MODE_RX);
-    for(uint8_t i=0; i<255; i++) {
-      wdt_reset();
-      //LowPower.idle(SLEEP_30MS, ADC_OFF, TIMER2_OFF, TIMER1_OFF, TIMER0_OFF, SPI_OFF, USART0_ON, TWI_OFF);
-      _delay_ms(30);
-      if (rf69_receive(buf, &len, &lastrssi))
-      {
-        
+    bool ispacket;
+    uint8_t i;
+
+    count++;
+    wdt_reset();
+
+    if( !zombie_mode ) {
+        rf69_setMode(RFM69_MODE_RX);
+        for(i = 0; i < 255; i++) {
+            wdt_reset();
+            //LowPower.idle(SLEEP_30MS, ADC_OFF, TIMER2_OFF, TIMER1_OFF, TIMER0_OFF, SPI_OFF, USART0_ON, TWI_OFF);
+            _delay_ms(30);
+            rf69_receive(buf, &len, &lastrssi, &ispacket);
+            if(ispacket)
+            {
+
+                /*#ifdef ENABLE_UART_OUTPUT
+                  rf69_lastRssi(&lastrssi);
+                  for (j=0; j<len; j++) {
+                  Serial.print((char)buf[j]);
+                  if(buf[j]==']') break;
+                  }
+                  Serial.print("|");
+                  Serial.println(rx_rssi);
+#endif*/
+
+                // find end of packet & start of repeaters
+                uint8_t end_bracket = -1, start_bracket = -1;        
+                for (int k=0; k<len; k++) {
+                    if (buf[k] == '[') {
+                        start_bracket = k;
+                    }
+                    else if (buf[k] == ']') {
+                        end_bracket = k;
+                        buf[k+1] = '\0';
+                        break;
+                    }
+                }
+
+                // Need to take the recieved buffer and decode it and add a reference 
+                if (buf[0] > '0' && end_bracket != -1 && strstr((const char *)&buf[start_bracket], NODE_ID) == NULL) {
+                    // Reduce the repeat value
+                    buf[0]--;
+
+                    // Add the repeater ID
+                    packet_len = end_bracket + sprintf((char *)&buf[end_bracket], ",%s]", NODE_ID);
+                    uint16_t delayValue = getRandBetween(5u, 80u);
+                    for (int j = 0; j < delayValue;j++){
+                        //random delay to try and avoid packet collision
+                        _delay_ms(10);
+                    }
+
+                    rf69_send((rfm_reg_t *)buf, packet_len, RFM_POWER);
+                    /*#ifdef ENABLE_UART_OUTPUT
+                      for (j=0; j<packet_len; j++) {
+                      if(buf[j]==']'){
+                      Serial.println((char)buf[j]);
+                      break;
+                      }
+                      Serial.print((char)buf[j]);
+                      }
+#endif*/
+                }
+            }
+        }
+    } else {
+        // Battery Voltage Low - Zombie Mode
+
+        // Low Power Sleep for 8 seconds
+        rf69_setMode(RFM69_MODE_SLEEP);
+        _delay_ms(8000u);
+    }
+
+    if (count >= data_interval){
+        sequence_id++;
+
+        if(sequence_id > 122){
+            sequence_id = 98; //'b'
+        }
+
+        packet_len = gen_data(databuf);
+        rf69_send((rfm_reg_t *)databuf, packet_len, RFM_POWER);
         /*#ifdef ENABLE_UART_OUTPUT
-         rx_rssi = rf69_lastRssi();
-         for (j=0; j<len; j++) {
-             Serial.print((char)buf[j]);
-             if(buf[j]==']') break;
-         }
-         Serial.print("|");
-         Serial.println(rx_rssi);
-        #endif*/
-
-        // find end of packet & start of repeaters
-        uint8_t end_bracket = -1, start_bracket = -1;        
-        for (int k=0; k<len; k++) {
-          if (buf[k] == '[') {
-            start_bracket = k;
-          }
-          else if (buf[k] == ']') {
-            end_bracket = k;
-            buf[k+1] = '\0';
-            break;
-          }
+        // Print own Beacon Packet
+        for (j=0; j<packet_len; j++)
+        {
+        if(data[j]==']') // Check for last char in packet
+        {
+        Serial.println(data[j]);
+        break;
         }
-
-        // Need to take the recieved buffer and decode it and add a reference 
-        if (buf[0] > '0' && end_bracket != -1 && strstr((const char *)&buf[start_bracket], NODE_ID) == NULL) {
-          // Reduce the repeat value
-          buf[0]--;
-          
-          // Add the repeater ID
-          packet_len = end_bracket + sprintf((char *)&buf[end_bracket], ",%s]", NODE_ID);
-          uint16_t delayValue = getRandBetween(5u, 80u);
-          for (int j = 0; j < delayValue;j++){
-          //random delay to try and avoid packet collision
-              _delay_ms(10);
-          }
-          
-          rf69_send((uint8_t*)buf, packet_len, RFM_POWER);
-          /*#ifdef ENABLE_UART_OUTPUT
-             for (j=0; j<packet_len; j++) {
-                 if(buf[j]==']'){
-                    Serial.println((char)buf[j]);
-                    break;
-                 }
-                 Serial.print((char)buf[j]);
-             }
-            #endif*/
+        Serial.print(data[j]);
         }
-      }
-    }
-  } else {
-    // Battery Voltage Low - Zombie Mode
-    
-    // Low Power Sleep for 8 seconds
-    rf69_setMode(RFM69_MODE_SLEEP);
-    _delay_ms(8000u);
-  }
-  
-  if (count >= data_interval){
-    sequence_id++;
+#endif*/
 
-    if(sequence_id > 122){
-      sequence_id = 98; //'b'
+        data_interval = getRandBetween((BEACON_INTERVAL/8), (BEACON_INTERVAL/8)+2) + count;
+#ifdef ENABLE_ZOMBIE_MODE
+        if(battV > ZOMBIE_THRESHOLD && zombie_mode==1) {
+            rf69_setMode(RFM69_MODE_RX);
+            zombie_mode=0;
+#ifdef SENSITIVE_RX
+            rf69_SetLnaMode(RF_TESTLNA_SENSITIVE);
+#endif
+        } else if (battV < ZOMBIE_THRESHOLD && zombie_mode==0) {
+            rf69_setMode(RFM69_MODE_SLEEP);
+            zombie_mode=1;
+        }
+#endif
     }
-    
-    packet_len = gen_data(databuf);
-    rf69_send((uint8_t*)databuf, packet_len, RFM_POWER);
-    /*#ifdef ENABLE_UART_OUTPUT
-     // Print own Beacon Packet
-     for (j=0; j<packet_len; j++)
-     {
-         if(data[j]==']') // Check for last char in packet
-         {
-             Serial.println(data[j]);
-             break;
-         }
-         Serial.print(data[j]);
-     }
-    #endif*/
-    
-    data_interval = getRandBetween((BEACON_INTERVAL/8), (BEACON_INTERVAL/8)+2) + count;
-    #ifdef ENABLE_ZOMBIE_MODE
-     if(battV > ZOMBIE_THRESHOLD && zombie_mode==1) {
-         rf69_setMode(RFM69_MODE_RX);
-         zombie_mode=0;
-         #ifdef SENSITIVE_RX
-          rf69_SetLnaMode(RF_TESTLNA_SENSITIVE);
-         #endif
-     } else if (battV < ZOMBIE_THRESHOLD && zombie_mode==0) {
-         rf69_setMode(RFM69_MODE_SLEEP);
-         zombie_mode=1;
-     }
-    #endif
-  }
 }
 
 uint16_t getRandBetween(uint16_t lower, uint16_t upper){
