@@ -239,7 +239,7 @@ void loop(void)
 */
 
                 // Find end of packet & start of repeaters
-                uint8_t end_bracket = -1, start_bracket = -1;        
+                uint8_t end_bracket = 255, start_bracket = 255;
                 for (int k=0; k<len; k++)
                 {
                     if (buf[k] == '[')
@@ -256,7 +256,7 @@ void loop(void)
 
                 // Need to take the recieved buffer and decode it and 
                 // add a reference 
-                if (buf[0] > '0' && end_bracket != -1 && strstr((const char *)&buf[start_bracket], NODE_ID) == NULL)
+                if (buf[0] > '0' && end_bracket != 255 && strstr((const char *)&buf[start_bracket], NODE_ID) == NULL)
                 {
                     // Reduce the repeat value
                     buf[0]--;
