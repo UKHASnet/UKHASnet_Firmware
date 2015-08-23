@@ -40,7 +40,6 @@ int16_t gen_data(char *buf);
 void init(void);
 uint16_t getRandBetween(const uint16_t lower, const uint16_t upper);
 void enableRepeat(void);
-int16_t gen_data(char *buf);
 void loop(void);
 void sendPacket(void);
 
