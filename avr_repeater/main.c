@@ -1,7 +1,11 @@
 /**
- * UKHASnet Dumb-Sensor Code by Phil Crump M0DNY
- * Bare metal AVR version by Jon Sowman M0JSN <jon@jonsowman.com>
+ * UKHASnet Repeater Code by Phil Crump M0DNY
+ * Bare metal AVR version by Jon Sowman M0JSN <jon+github@jonsowman.com>
  * Based on UKHASnet rf69_repeater by James Coxon M6JCX
+ *
+ * Uses the ukhasnet-rfm69 library. Please see README.me in the git repository
+ * for instructions to get and use the library.
+ * https://github.com/UKHASnet/ukhasnet-rfm69
  */
 
 #include <avr/io.h>
@@ -17,30 +21,33 @@
 #include "ukhasnet-rfm69-config.h"
 #include "nodeconfig.h"
 
-/* Private prototypes */
-float get_batt_voltage(void);
-int16_t gen_data(char *buf);
-void init(void);
+/* Zombie mode */
+typedef enum zombie_mode_t {MODE_NORMAL, MODE_ZOMBIE} zombie_mode_t;
 
 /* Global variables local to this compilation unit */
 static int16_t packet_len;
 static float battV = 0.0;
 static uint32_t count = 1, data_interval = 2;
-static uint8_t sequence_id = 97; // 'a'
+static uint8_t sequence_id = 'a';
 static char databuf[64];
 static rfm_reg_t buf[64], len;
 static int16_t lastrssi;
-static uint8_t zombie_mode = 0; // Stores current status: 0 - Full Repeating, 1 - Low Power shutdown, (beacon only)
+static zombie_mode_t zombie_mode = MODE_NORMAL;
 
 /* Private prototypes */
-uint16_t getRandBetween(uint16_t lower, uint16_t upper);
+float get_batt_voltage(void);
+int16_t gen_data(char *buf);
+void init(void);
+uint16_t getRandBetween(const uint16_t lower, const uint16_t upper);
 void enableRepeat(void);
 int16_t gen_data(char *buf);
 void loop(void);
 void sendPacket(void);
 
 /**
- * Measure the battery voltage.
+ * Measure the battery voltage as measured by a potential divider on BATTV_PIN
+ * defined in nodeconfig.h. BATTV_SCALEFACTOR should also be set appropriately
+ * in this file.
  * @returns The voltage of the battery in Volts
  */
 float get_batt_voltage(void)
@@ -74,6 +81,12 @@ float get_batt_voltage(void)
     return (float)(res * 0.001074219 * BATTV_SCALEFACTOR * BATTV_FUDGE);
 }
 
+/**
+ * Given a char buffer, generate a UKHASnet packet and return the length of
+ * the packet written to the supplied buffer.
+ * @param buf The char buffer into which to write the packet
+ * @returns The length of the packet that was written
+ */
 int16_t gen_data(char *buf)
 {
     int8_t temp = 0;
@@ -107,9 +120,12 @@ int16_t gen_data(char *buf)
     return sprintf(buf, "%s[%s]", buf, NODE_ID);
 }
 
+/**
+ * Initialise internal and external peripherals, including reading config and
+ * setting power savings modes.
+ */
 void init(void)
 {
-
     /* Turn off peripherals that we don't use */
     PRR |= _BV(PRTWI) | _BV(PRTIM2) | _BV(PRTIM1) | _BV(PRTIM0) | _BV(PRUSART0);
 
@@ -120,40 +136,55 @@ void init(void)
     enableRepeat();
 }
 
-void sendPacket(void){
-    if(sequence_id > 122){
-        sequence_id = 98; //'b'
+/**
+ * A wrapper function to generate a packet using gen_data() and then transmit
+ * it using the RFM69 radio.
+ */
+void sendPacket(void)
+{
+    if(sequence_id > 'z')
+    {
+        sequence_id = 'b';
     }
     packet_len = gen_data(databuf);
-    rf69_send((uint8_t*)databuf, packet_len, RFM_POWER);
+    rf69_send((rfm_reg_t *)databuf, packet_len, RFM_POWER);
     sequence_id++;
     wdt_reset();
     _delay_ms(1000);
     wdt_reset();
 }
 
-void enableRepeat(void){
-
+/**
+ * If ENABLE_ZOMBIE_MODE is defined in nodeconfig.h, this function should be
+ * called regularly to bring the node in and out of zombie mode as a function
+ * of battery voltage. ZOMBIE_THRESHOLD is the zombie mode threshold battery
+ * voltage in Volts, define this also in nodeconfig.h.
+ */
+void enableRepeat(void)
+{
 #ifdef ENABLE_ZOMBIE_MODE
     if(battV > ZOMBIE_THRESHOLD) {
         rf69_setMode(RFM69_MODE_RX);
-        zombie_mode=0;
+        zombie_mode = MODE_NORMAL;
 #ifdef SENSITIVE_RX
         rf69_SetLnaMode(RF_TESTLNA_SENSITIVE);
-#endif
+#endif /* SENSITIVE_RX */
     } else {
         rf69_setMode(RFM69_MODE_SLEEP);
-        zombie_mode=1;
+        zombie_mode = MODE_ZOMBIE;
     }
 #else
     rf69_setMode(RFM69_MODE_RX);
-    zombie_mode=0;
+    zombie_mode = MODE_NORMAL;
 #ifdef SENSITIVE_RX
     rf69_SetLnaMode(RF_TESTLNA_SENSITIVE);
-#endif
-#endif
+#endif /* SENSITIVE_RX */
+#endif /* ENABLE_ZOMBIE_MODE */
 }
 
+/**
+ * Call init functions and then run forever.
+ */
 int main(void)
 {
     init();
@@ -171,6 +202,11 @@ int main(void)
     return 0;
 }
 
+/**
+ * Contents of this function are called every iteration of the infinite main
+ * loop. We should do houskeeping, then transmit/receive as and when it is
+ * necessary.
+ */
 void loop(void)
 {
     bool ispacket;
@@ -179,17 +215,20 @@ void loop(void)
     count++;
     wdt_reset();
 
-    if( !zombie_mode ) {
+    if( zombie_mode == MODE_NORMAL )
+    {
         rf69_setMode(RFM69_MODE_RX);
         for(i = 0; i < 255; i++) {
             wdt_reset();
-            //LowPower.idle(SLEEP_30MS, ADC_OFF, TIMER2_OFF, TIMER1_OFF, TIMER0_OFF, SPI_OFF, USART0_ON, TWI_OFF);
+            //LowPower.idle(SLEEP_30MS, ADC_OFF, TIMER2_OFF, TIMER1_OFF, 
+            //  TIMER0_OFF, SPI_OFF, USART0_ON, TWI_OFF);
             _delay_ms(30);
             rf69_receive(buf, &len, &lastrssi, &ispacket);
             if(ispacket)
             {
 
-                /*#ifdef ENABLE_UART_OUTPUT
+/*
+#ifdef ENABLE_UART_OUTPUT
                   rf69_lastRssi(&lastrssi);
                   for (j=0; j<len; j++) {
                   Serial.print((char)buf[j]);
@@ -197,36 +236,44 @@ void loop(void)
                   }
                   Serial.print("|");
                   Serial.println(rx_rssi);
-#endif*/
+#endif
+*/
 
-                // find end of packet & start of repeaters
+                // Find end of packet & start of repeaters
                 uint8_t end_bracket = -1, start_bracket = -1;        
-                for (int k=0; k<len; k++) {
-                    if (buf[k] == '[') {
+                for (int k=0; k<len; k++)
+                {
+                    if (buf[k] == '[')
+                    {
                         start_bracket = k;
                     }
-                    else if (buf[k] == ']') {
+                    else if (buf[k] == ']')
+                    {
                         end_bracket = k;
                         buf[k+1] = '\0';
                         break;
                     }
                 }
 
-                // Need to take the recieved buffer and decode it and add a reference 
-                if (buf[0] > '0' && end_bracket != -1 && strstr((const char *)&buf[start_bracket], NODE_ID) == NULL) {
+                // Need to take the recieved buffer and decode it and 
+                // add a reference 
+                if (buf[0] > '0' && end_bracket != -1 && strstr((const char *)&buf[start_bracket], NODE_ID) == NULL)
+                {
                     // Reduce the repeat value
                     buf[0]--;
 
                     // Add the repeater ID
                     packet_len = end_bracket + sprintf((char *)&buf[end_bracket], ",%s]", NODE_ID);
                     uint16_t delayValue = getRandBetween(5u, 80u);
-                    for (int j = 0; j < delayValue;j++){
+                    for (int j = 0; j < delayValue;j++)
+                    {
                         //random delay to try and avoid packet collision
                         _delay_ms(10);
                     }
 
                     rf69_send((rfm_reg_t *)buf, packet_len, RFM_POWER);
-                    /*#ifdef ENABLE_UART_OUTPUT
+/*
+#ifdef ENABLE_UART_OUTPUT
                       for (j=0; j<packet_len; j++) {
                       if(buf[j]==']'){
                       Serial.println((char)buf[j]);
@@ -234,28 +281,34 @@ void loop(void)
                       }
                       Serial.print((char)buf[j]);
                       }
-#endif*/
+#endif
+*/
                 }
             }
         }
-    } else {
-        // Battery Voltage Low - Zombie Mode
+    }
+    else
+    {
+        // Battery Voltage Low - Zombie Mode, ignore all repeating
+        // functionality of the node
 
         // Low Power Sleep for 8 seconds
         rf69_setMode(RFM69_MODE_SLEEP);
         _delay_ms(8000u);
     }
 
-    if (count >= data_interval){
+    if (count >= data_interval)
+    {
         sequence_id++;
 
-        if(sequence_id > 122){
-            sequence_id = 98; //'b'
-        }
+        // Reset the sequence id if we've reached 'z'
+        if(sequence_id > 'z')
+            sequence_id = 'b';
 
         packet_len = gen_data(databuf);
         rf69_send((rfm_reg_t *)databuf, packet_len, RFM_POWER);
-        /*#ifdef ENABLE_UART_OUTPUT
+/*
+#ifdef ENABLE_UART_OUTPUT
         // Print own Beacon Packet
         for (j=0; j<packet_len; j++)
         {
@@ -266,25 +319,39 @@ void loop(void)
         }
         Serial.print(data[j]);
         }
-#endif*/
+#endif
+*/
 
-        data_interval = getRandBetween((BEACON_INTERVAL/8), (BEACON_INTERVAL/8)+2) + count;
+        data_interval = getRandBetween((BEACON_INTERVAL/8), 
+                (BEACON_INTERVAL/8)+2) + count;
 #ifdef ENABLE_ZOMBIE_MODE
-        if(battV > ZOMBIE_THRESHOLD && zombie_mode==1) {
+        if(battV > ZOMBIE_THRESHOLD && zombie_mode == MODE_ZOMBIE)
+        {
             rf69_setMode(RFM69_MODE_RX);
-            zombie_mode=0;
+            zombie_mode = MODE_NORMAL;
 #ifdef SENSITIVE_RX
             rf69_SetLnaMode(RF_TESTLNA_SENSITIVE);
 #endif
-        } else if (battV < ZOMBIE_THRESHOLD && zombie_mode==0) {
+        }
+        else if (battV < ZOMBIE_THRESHOLD && zombie_mode == MODE_NORMAL)
+        {
             rf69_setMode(RFM69_MODE_SLEEP);
-            zombie_mode=1;
+            zombie_mode = MODE_NORMAL;
         }
 #endif
     }
 }
 
-uint16_t getRandBetween(uint16_t lower, uint16_t upper){
+/**
+ * Get a random number between an upper and lower limit. The random number
+ * generation itself is rand(), which must be supported in the platform of 
+ * your choice.
+ * @param lower The lower boundary
+ * @param upper The upper boundary
+ * @returns The resulting random number between lower and upper.
+ */
+uint16_t getRandBetween(const uint16_t lower, const uint16_t upper)
+{
     return (uint16_t)(((double)rand() / ((double)RAND_MAX + 1) * (upper-lower))+lower);
 }
 
