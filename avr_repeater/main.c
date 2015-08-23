@@ -264,7 +264,7 @@ void loop(void)
                     // Add the repeater ID
                     packet_len = end_bracket + sprintf((char *)&buf[end_bracket], ",%s]", NODE_ID);
                     uint16_t delayValue = getRandBetween(5u, 80u);
-                    for (int j = 0; j < delayValue;j++)
+                    for (uint8_t j = 0; j < delayValue;j++)
                     {
                         //random delay to try and avoid packet collision
                         _delay_ms(10);

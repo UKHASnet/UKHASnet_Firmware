@@ -27,7 +27,7 @@ OBJECTS = $(SOURCES:.c=.o)
 AVRDUDE = avrdude $(PROGRAMMER) -p $(DEVICE) -C /etc/avrdude.conf
 
 # Compiler flags. Optimise for code size. Allow C99 standards.
-COMPILE = avr-gcc -Wall -Os -gdwarf-2 -std=gnu99 -DF_CPU=$(CLOCK) -mmcu=atmega328p -I ./$(RFMLIBDIR) 
+COMPILE = avr-gcc -Wall -Wextra -pedantic -Os -gdwarf-2 -std=gnu99 -DF_CPU=$(CLOCK) -mmcu=atmega328p -I ./$(RFMLIBDIR) 
 
 # symbolic targets:
 all:	main.hex
