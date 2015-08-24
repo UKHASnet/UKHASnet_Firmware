@@ -193,10 +193,7 @@ int main(void)
     data_interval = BEACON_INTERVAL;
 
     while(1)
-    {
-        _delay_ms(8000);
         loop();
-    }
 
     return 0;
 }
