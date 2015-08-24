@@ -44,8 +44,8 @@ rfm_status_t spi_init(void)
     /* Finally, enable the SPI periph */
     SPCR |= _BV(SPE);
 
-    /* Call the rf69 library function to init the radio */
-    return rf69_init();
+    /* Return RFM_OK if everything went ok, otherwise RFM_FAIL */
+    return RFM_OK;
 }
 
 /**
