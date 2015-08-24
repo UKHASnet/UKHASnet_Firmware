@@ -31,9 +31,4 @@
 #define SPI_MISO    _BV(4)
 #define SPI_SCK     _BV(5)
 
-rfm_status_t rfm69_init(void);
-rfm_status_t spi_exchange_single(const rfm_reg_t out, rfm_reg_t* in);
-rfm_status_t spi_ss_assert(void);
-rfm_status_t spi_ss_deassert(void);
-
 #endif /* __SPI_CONF_H__ */
