@@ -24,7 +24,7 @@ FUSES      = -U hfuse:w:0xdf:m -U lfuse:w:0x62:m
 
 # End configuration
 OBJECTS = $(SOURCES:.c=.o)
-AVRDUDE = avrdude $(PROGRAMMER) -p $(DEVICE) -C /etc/avrdude.conf
+AVRDUDE = avrdude $(PROGRAMMER) -p $(DEVICE)
 
 # Compiler flags. Optimise for code size. Allow C99 standards.
 COMPILE = avr-gcc -Wall -Wextra -pedantic -Os -gdwarf-2 -std=gnu99 -DF_CPU=$(CLOCK) -mmcu=atmega168 -I ./$(RFMLIBDIR) 
