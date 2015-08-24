@@ -25,7 +25,7 @@
  * RFM69, and become a master.
  * @returns True on success, false on failure.
  */
-rfm_status_t rfm69_init(void)
+rfm_status_t spi_init(void)
 {
     /* Set up the SPI IO as appropriate */
     SPI_DDR |= SPI_SS | SPI_MOSI | SPI_SCK;
@@ -66,16 +66,18 @@ rfm_status_t spi_exchange_single(const rfm_reg_t out, rfm_reg_t* in)
 /**
  * User function to assert the slave select pin
  */
-void spi_ss_assert(void)
+rfm_status_t spi_ss_assert(void)
 {
     SPI_PORT &= ~(SPI_SS);
+    return RFM_OK;
 }
 
 /**
  * User function to deassert the slave select pin
  */
-void spi_ss_deassert(void)
+rfm_status_t spi_ss_deassert(void)
 {
     SPI_PORT |= (SPI_SS);
+    return RFM_OK;
 }
 
