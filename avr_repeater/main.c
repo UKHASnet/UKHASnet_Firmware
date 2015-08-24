@@ -128,7 +128,7 @@ void init(void)
     /* Turn off peripherals that we don't use */
     PRR |= _BV(PRTWI) | _BV(PRTIM2) | _BV(PRTIM1) | _BV(PRTIM0) | _BV(PRUSART0);
 
-    while(!rf69_init())
+    while(rf69_init() != RFM_OK)
         _delay_ms(100);
     sendPacket();
 
