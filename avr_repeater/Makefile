@@ -17,7 +17,7 @@ RFMLIBDIR  = ukhasnet-rfm69
 
 # Configure the following settings according to the device in use
 DEVICE     = m328p
-CLOCK      = 8000000
+CLOCK      = 1000000
 PROGRAMMER = -c avrispmkII -P usb -B 5
 SOURCES	   = $(wildcard *.c) $(wildcard $(RFMLIBDIR)/*.c)
 FUSES      = -U hfuse:w:0xdf:m -U lfuse:w:0x62:m

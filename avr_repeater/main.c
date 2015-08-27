@@ -190,7 +190,7 @@ int main(void)
     rf69_setMode(RFM69_MODE_SLEEP);
 
     /* Initial data interval = BEACON_INTERVAL since count = 0 */
-    data_interval = BEACON_INTERVAL;
+    data_interval = BEACON_INTERVAL/8;
 
     while(1)
         loop();
