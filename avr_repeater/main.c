@@ -39,7 +39,7 @@ float get_batt_voltage(void);
 int16_t gen_data(char *buf);
 void init(void);
 uint16_t getRandBetween(const uint16_t lower, const uint16_t upper);
-void enableRepeat(void);
+void zombieMode(void);
 void loop(void);
 void sendPacket(void);
 
@@ -116,6 +116,11 @@ int16_t gen_data(char *buf)
     sprintf(buf, "%sV%s", buf, battStr);
 #endif
 
+    // If zombie mode is enabled, put the current zombie status in telem
+#ifdef ENABLE_ZOMBIE_MODE
+    sprintf(buf, "%sZ%d", buf, zombie_mode);
+#endif /* ENABLE_ZOMBIE_MODE */
+
     return sprintf(buf, "%s[%s]", buf, NODE_ID);
 }
 
@@ -131,8 +136,6 @@ void init(void)
     while(rf69_init() != RFM_OK)
         _delay_ms(100);
     sendPacket();
-
-    enableRepeat();
 }
 
 /**
@@ -159,16 +162,19 @@ void sendPacket(void)
  * of battery voltage. ZOMBIE_THRESHOLD is the zombie mode threshold battery
  * voltage in Volts, define this also in nodeconfig.h.
  */
-void enableRepeat(void)
+void zombieMode(void)
 {
 #ifdef ENABLE_ZOMBIE_MODE
-    if(battV > ZOMBIE_THRESHOLD) {
+    if(battV > ZOMBIE_THRESHOLD && zombie_mode == MODE_ZOMBIE)
+    {
         rf69_setMode(RFM69_MODE_RX);
         zombie_mode = MODE_NORMAL;
 #ifdef SENSITIVE_RX
         rf69_SetLnaMode(RF_TESTLNA_SENSITIVE);
 #endif /* SENSITIVE_RX */
-    } else {
+    }
+    else if(battV < ZOMBIE_THRESHOLD && zombie_mode == MODE_NORMAL)
+    {
         rf69_setMode(RFM69_MODE_SLEEP);
         zombie_mode = MODE_ZOMBIE;
     }
@@ -320,21 +326,9 @@ void loop(void)
 
         data_interval = getRandBetween((BEACON_INTERVAL/8), 
                 (BEACON_INTERVAL/8)+2) + count;
-#ifdef ENABLE_ZOMBIE_MODE
-        if(battV > ZOMBIE_THRESHOLD && zombie_mode == MODE_ZOMBIE)
-        {
-            rf69_setMode(RFM69_MODE_RX);
-            zombie_mode = MODE_NORMAL;
-#ifdef SENSITIVE_RX
-            rf69_SetLnaMode(RF_TESTLNA_SENSITIVE);
-#endif
-        }
-        else if (battV < ZOMBIE_THRESHOLD && zombie_mode == MODE_NORMAL)
-        {
-            rf69_setMode(RFM69_MODE_SLEEP);
-            zombie_mode = MODE_NORMAL;
-        }
-#endif
+
+        // Check if we need to enter or leave zombie mode
+        zombieMode();
     }
 }
 
