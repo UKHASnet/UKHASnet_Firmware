@@ -71,9 +71,6 @@ void sendPacket(void)
     packet_len = gen_data(databuf);
     rf69_send((rfm_reg_t *)databuf, packet_len, RFM_POWER);
     sequence_id++;
-    wdt_reset();
-    _delay_ms(1000);
-    wdt_reset();
 }
 
 /**
@@ -203,40 +200,28 @@ void loop(void)
     else
     {
         /* Battery Voltage Low - Zombie Mode, ignore all repeating
-         * functionality of the node */
-
-        // Low Power Sleep for 8 seconds
+         * functionality of the node 
+         * Low Power Sleep for 8 seconds
+         */
         rf69_setMode(RFM69_MODE_SLEEP);
 
-        /* TODO: Low power sleep instead of busy waiting */
-        _delay_ms(8000u);
+        /* Enable the watchdog and sleep for 8 seconds */
+        wdt_enable(WDTO_8S);
+        WDTCSR |= (1 << WDIE);
+        set_sleep_mode(SLEEP_MODE_PWR_DOWN);
+        sleep_enable();
+        sei();
+        sleep_cpu();
+        sleep_disable();
     }
 
+    /* Time to send a beacon? */
     if(count >= data_interval)
     {
-        sequence_id++;
+        /* Send a packet */
+        sendPacket();
 
-        // Reset the sequence id if we've reached 'z'
-        if(sequence_id > 'z')
-            sequence_id = 'b';
-
-        packet_len = gen_data(databuf);
-        rf69_send((rfm_reg_t *)databuf, packet_len, RFM_POWER);
-/*
-#ifdef ENABLE_UART_OUTPUT
-        // Print own Beacon Packet
-        for (j=0; j<packet_len; j++)
-        {
-        if(data[j]==']') // Check for last char in packet
-        {
-        Serial.println(data[j]);
-        break;
-        }
-        Serial.print(data[j]);
-        }
-#endif
-*/
-
+        /* When will we send the next beacon? */
         data_interval = getRandBetween((BEACON_INTERVAL/8), 
                 (BEACON_INTERVAL/8)+2) + count;
 
@@ -341,7 +326,8 @@ uint16_t getRandBetween(const uint16_t lower, const uint16_t upper)
 }
 
 /**
- * Watchdog interrupt
+ * Watchdog interrupt, we have just woken from sleep. Kill the watchdog and
+ * then exit the ISR, main execution continues.
  */
 ISR(WDT_vect)
 {
