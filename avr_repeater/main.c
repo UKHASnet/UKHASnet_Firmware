@@ -265,8 +265,9 @@ int16_t gen_data(char *buf)
     sprintf(buf, "%u%c", NUM_REPEATS, sequence_id);
 #endif
 
-    rf69_readTemp(&temp);
-    sprintf(buf, "%sT%i.0", buf, temp);
+    /* Read the temperature and if successful, add to packet */
+    if( rf69_readTemp(&temp) == RFM_OK )
+        sprintf(buf, "%sT%i.0", buf, temp);
 
     // Battery Voltage
 #if ENABLE_BATTV_SENSOR == 1
