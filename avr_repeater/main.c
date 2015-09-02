@@ -84,22 +84,22 @@ void zombieMode(void)
 #ifdef ENABLE_ZOMBIE_MODE
     if(battV > (ZOMBIE_THRESHOLD + ZOMBIE_HYST) && zombie_mode == MODE_ZOMBIE)
     {
-        rf69_setMode(RFM69_MODE_RX);
+        rf69_set_mode(RFM69_MODE_RX);
         zombie_mode = MODE_NORMAL;
 #ifdef SENSITIVE_RX
-        rf69_SetLnaMode(RF_TESTLNA_SENSITIVE);
+        rf69_set_lna_mode(RF_TESTLNA_SENSITIVE);
 #endif /* SENSITIVE_RX */
     }
     else if(battV < ZOMBIE_THRESHOLD && zombie_mode == MODE_NORMAL)
     {
-        rf69_setMode(RFM69_MODE_SLEEP);
+        rf69_set_mode(RFM69_MODE_SLEEP);
         zombie_mode = MODE_ZOMBIE;
     }
 #else
-    rf69_setMode(RFM69_MODE_RX);
+    rf69_set_mode(RFM69_MODE_RX);
     zombie_mode = MODE_NORMAL;
 #ifdef SENSITIVE_RX
-    rf69_SetLnaMode(RF_TESTLNA_SENSITIVE);
+    rf69_set_lna_mode(RF_TESTLNA_SENSITIVE);
 #endif /* SENSITIVE_RX */
 #endif /* ENABLE_ZOMBIE_MODE */
 }
@@ -110,7 +110,7 @@ void zombieMode(void)
 int main(void)
 {
     init();
-    rf69_setMode(RFM69_MODE_SLEEP);
+    rf69_set_mode(RFM69_MODE_SLEEP);
 
     /* Initial data interval = BEACON_INTERVAL since count = 0 */
     data_interval = BEACON_INTERVAL/8;
@@ -137,7 +137,7 @@ void loop(void)
 
     if( zombie_mode == MODE_NORMAL )
     {
-        rf69_setMode(RFM69_MODE_RX);
+        rf69_set_mode(RFM69_MODE_RX);
 
         /* This loop is calculated to take roughly 8 seconds, i.e. 255
          * iterations with a 30ms delay */
@@ -203,7 +203,7 @@ void loop(void)
          * functionality of the node 
          * Low Power Sleep for 8 seconds
          */
-        rf69_setMode(RFM69_MODE_SLEEP);
+        rf69_set_mode(RFM69_MODE_SLEEP);
 
         /* Enable the watchdog and sleep for 8 seconds */
         wdt_enable(WDTO_8S);
@@ -251,7 +251,7 @@ int16_t gen_data(char *buf)
 #endif
 
     /* Read the temperature and if successful, add to packet */
-    if( rf69_readTemp(&temp) == RFM_OK )
+    if( rf69_read_temp(&temp) == RFM_OK )
         sprintf(buf, "%sT%i.0", buf, temp);
 
     // Battery Voltage

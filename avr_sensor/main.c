@@ -77,7 +77,7 @@ int16_t gen_data(char *buf)
     sprintf(buf, "%u%c", NUM_REPEATS, sequence_id);
 #endif
 
-    rf69_readTemp(&temp);
+    rf69_read_temp(&temp);
     sprintf(buf, "%sT%i.0", buf, temp);
 
     // Battery Voltage
@@ -116,7 +116,7 @@ int main(void)
 
     init();
 
-    rf69_setMode(RFM69_MODE_SLEEP);
+    rf69_set_mode(RFM69_MODE_SLEEP);
 
     /* Initial data interval = BEACON_INTERVAL since count = 0 */
     data_interval = BEACON_INTERVAL;
