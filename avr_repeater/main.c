@@ -264,7 +264,8 @@ int16_t gen_data(char *buf)
     char tempStrB[14]; //make buffer large enough for 7 digits
     battStr = dtostrf(battV,7,2,tempStrB);
     /* Remove leading spaces by incrementing the pointer */
-    while( *battStr++ == ' ' );
+    while( *battStr == ' ' )
+        battStr++;
     sprintf(buf, "%sV%s", buf, battStr);
 #endif
 
