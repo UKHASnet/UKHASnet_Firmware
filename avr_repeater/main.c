@@ -260,10 +260,8 @@ int16_t gen_data(char *buf)
     char* battStr;
     char tempStrB[14]; //make buffer large enough for 7 digits
     battStr = dtostrf(battV,7,2,tempStrB);
-    while( (strlen(battStr) > 0) && (battStr[0] == 32) )
-    {
-        strcpy(battStr,&battStr[1]);
-    }
+    /* Remove leading spaces by incrementing the pointer */
+    while( *battStr++ == ' ' );
     sprintf(buf, "%sV%s", buf, battStr);
 #endif
 
