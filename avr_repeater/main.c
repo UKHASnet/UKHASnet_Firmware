@@ -82,7 +82,7 @@ void sendPacket(void)
 void zombieMode(void)
 {
 #ifdef ENABLE_ZOMBIE_MODE
-    if(battV > ZOMBIE_THRESHOLD && zombie_mode == MODE_ZOMBIE)
+    if(battV > (ZOMBIE_THRESHOLD + ZOMBIE_HYST) && zombie_mode == MODE_ZOMBIE)
     {
         rf69_setMode(RFM69_MODE_RX);
         zombie_mode = MODE_NORMAL;
