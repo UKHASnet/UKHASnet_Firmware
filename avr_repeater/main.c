@@ -24,18 +24,15 @@
 typedef enum zombie_mode_t {MODE_NORMAL, MODE_ZOMBIE} zombie_mode_t;
 
 /* Global variables local to this compilation unit */
-static int16_t packet_len;
 static float battV = 0.0;
 static uint32_t count = 1, data_interval = 2;
 static uint8_t sequence_id = 'a';
-static char databuf[64];
-static rfm_reg_t buf[64], len;
-static int16_t lastrssi;
+static char packet_buf[64];
 static zombie_mode_t zombie_mode = MODE_NORMAL;
 
 /* Private prototypes */
 float get_batt_voltage(void);
-int16_t gen_data(char *buf);
+int16_t gen_data(char* buf);
 void init(void);
 uint16_t getRandBetween(const uint16_t lower, const uint16_t upper);
 void zombieMode(void);
@@ -64,12 +61,14 @@ void init(void)
  */
 void sendPacket(void)
 {
+    uint16_t packet_len;
+
     if(sequence_id > 'z')
     {
         sequence_id = 'b';
     }
-    packet_len = gen_data(databuf);
-    rf69_send((rfm_reg_t *)databuf, packet_len, RFM_POWER);
+    packet_len = gen_data(packet_buf);
+    rf69_send((rfm_reg_t *)packet_buf, packet_len, RFM_POWER);
     sequence_id++;
 }
 
@@ -130,7 +129,9 @@ void loop(void)
 {
     bool ispacket;
     uint8_t i, j, k, start_bracket, end_bracket;
-    uint16_t delaytime;
+    uint16_t delaytime, packet_len;
+    int16_t lastrssi;
+    rfm_reg_t len;
 
     count++;
     wdt_reset();
@@ -146,7 +147,7 @@ void loop(void)
             //LowPower.idle(SLEEP_30MS, ADC_OFF, TIMER2_OFF, TIMER1_OFF, 
             //  TIMER0_OFF, SPI_OFF, USART0_ON, TWI_OFF);
             _delay_ms(30);
-            rf69_receive(buf, &len, &lastrssi, &ispacket);
+            rf69_receive((rfm_reg_t *)packet_buf, &len, &lastrssi, &ispacket);
 
             /* The boolean variable 'ispacket' will be true if rf69_receive
              * tells us there is a packet waiting in the RFM69 receive buffer
@@ -159,14 +160,14 @@ void loop(void)
                 /* TODO: This should be replaced with strstr() */
                 for (k = 0; k < len; k++)
                 {
-                    if (buf[k] == '[')
+                    if (packet_buf[k] == '[')
                     {
                         start_bracket = k;
                     }
-                    else if (buf[k] == ']')
+                    else if (packet_buf[k] == ']')
                     {
                         end_bracket = k;
-                        buf[k+1] = '\0';
+                        packet_buf[k+1] = '\0';
                         break;
                     }
                 }
@@ -178,13 +179,15 @@ void loop(void)
                  * malformed in some way
                  * 3) We have not /already/ repeated this packet
                  * */
-                if (buf[0] > '0' && end_bracket != 255 && strstr((const char *)&buf[start_bracket], NODE_ID) == NULL)
+                if (packet_buf[0] > '0' 
+                        && end_bracket != 255
+                        && strstr((const char *)&packet_buf[start_bracket], NODE_ID) == NULL)
                 {
                     /* Reduce the TTL (hops) */
-                    buf[0]--;
+                    packet_buf[0]--;
 
                     /* Add the repeater ID */
-                    packet_len = end_bracket + sprintf((char *)&buf[end_bracket], ",%s]", NODE_ID);
+                    packet_len = end_bracket + sprintf((char *)&packet_buf[end_bracket], ",%s]", NODE_ID);
 
                     /* Random delay to try and avoid packet collision */
                     delaytime = getRandBetween(5u, 80u);
@@ -192,7 +195,7 @@ void loop(void)
                         _delay_ms(10);
 
                     /* Now send the repeated packet */
-                    rf69_send((rfm_reg_t *)buf, packet_len, RFM_POWER);
+                    rf69_send((rfm_reg_t *)packet_buf, packet_len, RFM_POWER);
                 }
             }
         }
