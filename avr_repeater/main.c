@@ -26,7 +26,7 @@ typedef enum zombie_mode_t {MODE_NORMAL, MODE_ZOMBIE} zombie_mode_t;
 /* Global variables local to this compilation unit */
 static float battV = 0.0;
 static uint32_t count = 1, data_interval = 2;
-static uint8_t sequence_id = 'a';
+static char sequence_id = 'a';
 static char packet_buf[64];
 static zombie_mode_t zombie_mode = MODE_NORMAL;
 
