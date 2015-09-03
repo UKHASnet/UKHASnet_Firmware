@@ -25,7 +25,7 @@ void init(void);
 /* Global variables local to this compilation unit */
 static float battV = 0.0;
 static uint32_t count = 1, data_interval = 2;
-static uint8_t sequence_id = 97; // 'a'
+static uint8_t sequence_id = 'a';
 static char databuf[64];
 
 /**
@@ -80,11 +80,11 @@ int16_t gen_data(char *buf)
     rf69_read_temp(&temp);
     sprintf(buf, "%sT%i.0", buf, temp);
 
-    // Battery Voltage
+    /* Battery Voltage */
 #if ENABLE_BATTV_SENSOR == 1
     battV = get_batt_voltage();
     char* battStr;
-    char tempStrB[14]; //make buffer large enough for 7 digits
+    char tempStrB[14]; /* make buffer large enough for 7 digits */
     battStr = dtostrf(battV,7,2,tempStrB);
     while( (strlen(battStr) > 0) && (battStr[0] == 32) )
     {
@@ -138,8 +138,8 @@ int main(void)
             sequence_id++;
 
             /* Wrap the seqid */
-            if(sequence_id > 122)
-                sequence_id = 98; //'b'
+            if(sequence_id > 'z')
+                sequence_id = 'b';
 
             packet_len = gen_data(databuf);
             rf69_send((rfm_reg_t *)databuf, packet_len, RFM_POWER);

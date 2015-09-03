@@ -144,8 +144,6 @@ void loop(void)
          * iterations with a 30ms delay */
         for(i = 0; i < 255; i++) {
             wdt_reset();
-            //LowPower.idle(SLEEP_30MS, ADC_OFF, TIMER2_OFF, TIMER1_OFF, 
-            //  TIMER0_OFF, SPI_OFF, USART0_ON, TWI_OFF);
             _delay_ms(30);
             rf69_receive((rfm_reg_t *)packet_buf, &len, &lastrssi, &ispacket);
 
@@ -228,7 +226,7 @@ void loop(void)
         data_interval = getRandBetween((BEACON_INTERVAL/8), 
                 (BEACON_INTERVAL/8)+2) + count;
 
-        // Check if we need to enter or leave zombie mode
+        /* Check if we need to enter or leave zombie mode */
         zombieMode();
     }
 }
@@ -257,18 +255,18 @@ int16_t gen_data(char *buf)
     if( rf69_read_temp(&temp) == RFM_OK )
         sprintf(buf, "%sT%i.0", buf, temp);
 
-    // Battery Voltage
+    /* Battery Voltage */
 #if ENABLE_BATTV_SENSOR == 1
     battV = get_batt_voltage();
     char* battStr;
-    char tempStrB[14]; //make buffer large enough for 7 digits
+    char tempStrB[14]; /* make buffer large enough for 7 digits */
     battStr = dtostrf(battV,7,2,tempStrB);
     /* Remove leading spaces by incrementing the pointer */
     while( *battStr++ == ' ' );
     sprintf(buf, "%sV%s", buf, battStr);
 #endif
 
-    // If zombie mode is enabled, put the current zombie status in telem
+    /* If zombie mode is enabled, put the current zombie status in telem */
 #ifdef ENABLE_ZOMBIE_MODE
     sprintf(buf, "%sZ%d", buf, zombie_mode);
 #endif /* ENABLE_ZOMBIE_MODE */
