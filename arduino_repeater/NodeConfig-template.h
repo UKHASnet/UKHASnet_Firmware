@@ -9,13 +9,15 @@
  #define BEACON_INTERVAL 300 // Beacon Interval in seconds
  uint8_t rfm_power = 20; // dBmW
  #define SENSITIVE_RX // Enables TESTLNA_SENSITIVE
- #define ENABLE_BATTV_SENSOR // Comment out to disable, you must also disable zombie mode
+ #define ENABLE_BATTV_SENSOR // Comment out to disable, you must also disable zombie mode, 1:4 external voltagedivider needed on BATTV_PIN
+ //#define ENABLE_INTERNAL_BATTV_SENSOR // comment out the other one if using internal vcc measurement 
  #define BATTV_PIN 0 //ADC 0 - Battery Voltage, scaled to 1.1V
  #define BATTV_FUDGE 0.935 // Battery Voltage ADC Calibration Factor
  // Power Saving
  #define ENABLE_ZOMBIE_MODE // Comment this out to disable
  #define ZOMBIE_THRESHOLD 3.65 // Lower Voltage Threshold
  #define ENABLE_UART_OUTPUT // UART output of packets and rssi, used for gateways
+ #define UART_BAUDRATE 9600 // UART baudrate
 #endif
 
 #ifdef XXXX

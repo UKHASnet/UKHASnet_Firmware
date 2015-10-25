@@ -14,7 +14,7 @@ Based on UKHASnet rf69_repeater by James Coxon M6JCX
 #include "NodeConfig.h"
 
 //************* Misc Setup ****************/
-#ifdef ENABLE_BATTV_SENSOR
+#if defined(ENABLE_BATTV_SENSOR) || defined(ENABLE_INTERNAL_BATTV_SENSOR)
  float battV=0.0;
 #endif
 uint8_t n, i, j, k, packet_len;
@@ -47,6 +47,21 @@ int8_t sampleRfmTemp() {
  }
 #endif
 
+#ifdef ENABLE_INTERNAL_BATTV_SENSOR
+ float sampleBattv() {
+   long result;
+   ADMUX = _BV(REFS0) | _BV(MUX3) | _BV(MUX2) | _BV(MUX1);
+   delay(2); 
+   ADCSRA |= _BV(ADSC);
+   while (bit_is_set(ADCSRA,ADSC));
+   result = ADCL;
+   result |= ADCH<<8;
+   result = 1126400L / result;
+   return (float(result)/1000);
+ }
+#endif
+ 
+
 uint8_t gen_Data(){
 
   #ifdef LOCATION_STRING
@@ -63,7 +78,7 @@ uint8_t gen_Data(){
    sprintf(data,"%sT%d",data,sampleRfmTemp());
   #endif
   
-  #ifdef ENABLE_BATTV_SENSOR
+  #if defined(ENABLE_BATTV_SENSOR) || defined(ENABLE_INTERNAL_BATTV_SENSOR)
    battV = sampleBattv();
    char* battStr;
    char tempStrB[14]; //make buffer large enough for 7 digits
@@ -74,6 +89,7 @@ uint8_t gen_Data(){
    }
    sprintf(data,"%sV%s",data,battStr);
   #endif
+  
   
   #ifdef ENABLE_ZOMBIE_MODE
    sprintf(data,"%sZ%d",data,zombie_mode);
@@ -87,7 +103,11 @@ void setup()
   analogReference(INTERNAL); // 1.1V ADC reference
   randomSeed(analogRead(6));
   #ifdef ENABLE_UART_OUTPUT
-   Serial.begin(9600);
+   #ifdef UART_BAUDRATE
+    Serial.begin(UART_BAUDRATE);
+   #else 
+    Serial.begin(9600);
+   #endif
   #endif
   
   while (!rf69.init()){
