@@ -31,9 +31,4 @@
 #define SPI_MISO    _BV(4)
 #define SPI_SCK     _BV(5)
 
-bool rfm69_init(void);
-uint8_t spi_exchange_single(uint8_t out);
-void spi_ss_assert(void);
-void spi_ss_deassert(void);
-
 #endif /* __SPI_CONF_H__ */
