@@ -8,8 +8,10 @@ Based on UKHASnet rf69_repeater by James Coxon M6JCX
 
 #include <SPI.h>
 #include <string.h>
-#include "RFM69Config.h"
-#include "RFM69.h"
+
+#include <UKHASnetRFM69.h>
+#include <UKHASnetRFM69-config.h>
+
 #include "LowPower.h"
 
 #include "NodeConfig.h"
@@ -33,10 +35,6 @@ uint8_t n;
 uint32_t count = 1, data_interval = 2;
 uint8_t data_count = 97; // 'a'
 char data[64], string_end[] = "]";
-
-// Singleton instance of the radio
-RFM69 rf69;
-
 
 #ifdef ENABLE_BATTV_SENSOR
  float sampleBattv() {
@@ -137,9 +135,8 @@ void setup()
    digitalWrite(8, LOW);
   #endif
   
-  while (!rf69.init()){
+  while(rf69_init() != RFM_OK)
     LowPower.powerDown(SLEEP_120MS, ADC_OFF, BOD_OFF);
-  }
   
   #ifdef DS18B20
    #ifdef SENSOR_VCC
@@ -155,14 +152,14 @@ void setup()
   #endif
   
   int packet_len = gen_Data();
-  rf69.send((uint8_t*)data, packet_len, rfm_power);
+  rf69_send((rfm_reg_t *)data, packet_len, RFM_POWER);
 }
 
 void loop()
 {
   count++;
   
-  rf69.setMode(RFM69_MODE_SLEEP);
+  rf69_set_mode(RFM69_MODE_SLEEP);
   LowPower.powerDown(SLEEP_8S, ADC_OFF, BOD_OFF);
 
   if (count >= data_interval){
@@ -173,7 +170,7 @@ void loop()
     }
     
     int packet_len = gen_Data();
-    rf69.send((uint8_t*)data, packet_len, rfm_power);
+    rf69_send((rfm_reg_t *)data, packet_len, RFM_POWER);
     
     data_interval = random((BEACON_INTERVAL/8), (BEACON_INTERVAL/8)+2) + count;
   }

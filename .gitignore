@@ -1,2 +1,15 @@
 *~
 */NodeConfig.h
+*/nodeconfig.h
+*.swp
+*.swo
+
+# Build artifacts
+*.hex
+*.bin
+*.d
+*.o
+*.eep
+*.map
+*.a
+*.elf
