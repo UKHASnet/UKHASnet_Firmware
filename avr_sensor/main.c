@@ -18,7 +18,7 @@
 #include "nodeconfig.h"
 
 
-static char databuf[64];
+static char packet_buf[64];
 
 /**
  * Measure the battery voltage.
@@ -90,6 +90,18 @@ static int16_t gen_data(char *buf, uint8_t *sequence_id)
     return sprintf(buf, "%s[%s]", buf, NODE_ID);
 }
 
+static void _power_down(const uint8_t wdg_value)
+{
+    /* Enable the watchdog and sleep */
+    wdt_enable(wdg_value);
+    WDTCSR |= (1 << WDIE);
+    set_sleep_mode(SLEEP_MODE_PWR_DOWN);
+    sleep_enable();
+    sei();
+    sleep_cpu();
+    sleep_disable();
+}
+
 int main(void)
 {
 	uint32_t wakecount = 0;
@@ -106,8 +118,8 @@ int main(void)
         _delay_ms(100);
 
     /* Generate and transmit a packet */
-    packet_len = gen_data(databuf, &sequence_id);
-    rf69_send((rfm_reg_t *)databuf, packet_len, RFM_POWER);
+    packet_len = gen_data(packet_buf, &sequence_id);
+    rf69_send((rfm_reg_t *)packet_buf, packet_len, RFM_POWER);
 
     /* Set transmit interval (rounded up to a multiple of 8s watchdog cycles) */
     tx_wakecount_interval = (BEACON_INTERVAL / 8) + !!(BEACON_INTERVAL % 8);
@@ -117,15 +129,10 @@ int main(void)
 
     while(1)
     {
-        /* Enable the watchdog and sleep for 8 seconds */
-        wdt_enable(WDTO_8S);
-        WDTCSR |= (1 << WDIE);
-        set_sleep_mode(SLEEP_MODE_PWR_DOWN);
-        sleep_enable();
-        sei();
-        sleep_cpu();
-        sleep_disable();
+    	/* Power down AVR for 8s */
+        _power_down(WDTO_8S);
 
+        /* Check if we're due to transmit a beacon */
         if(wakecount == next_tx_wakecount)
         {
             /* Increment sequence id */
@@ -135,8 +142,8 @@ int main(void)
             	sequence_id++;
 
     		/* Generate and transmit a packet */
-            packet_len = gen_data(databuf, &sequence_id);
-            rf69_send((rfm_reg_t *)databuf, packet_len, RFM_POWER);
+            packet_len = gen_data(packet_buf, &sequence_id);
+            rf69_send((rfm_reg_t *)packet_buf, packet_len, RFM_POWER);
 
             /* Set next Transmit time */
             next_tx_wakecount = wakecount + tx_wakecount_interval;

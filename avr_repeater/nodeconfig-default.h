@@ -1,10 +1,10 @@
 //************* Define Node that you're compiling for ****************/
-#define EXAMPLE
+#define CHANGEME
 
 //************* Node-specific config ****************/
-#ifdef EXAMPLE
+#ifdef CHANGEME
     /** The string identifier of the node */
-    #define NODE_ID                 "MYNODE"
+    #define NODE_ID                 "CHANGEME"
 
     /**
      * The location of this node in decimal degrees. Comment out to disable
@@ -40,25 +40,18 @@
      * The microcontroller ADC and/or the potential divider are inaccurate.
      * Calibrate them using this value
      * */
-    #define BATTV_FUDGE             1.07
+    #define BATTV_FUDGE             1.0
 
     /**
      * The node will transmit a packet with this interval (in seconds)
      * */
-    #define BEACON_INTERVAL         185
+    #define BEACON_INTERVAL         60
 
     /**
      * Set the RFM69 radio to this power level (given in dBm). Note that non
      * -HW models support only up to +13dBm
      *  */
     #define RFM_POWER               10
-
-    /**
-     * Set this line to 1 if there is a DS18B20 temperature sensor connected
-     * to the node and you would like the firmware to read from it and transmit
-     * the value
-     * */
-    #define DS18B20                 1
 
     /**
      * Set this to 1 to enable reporting of the battery voltage using the AVR

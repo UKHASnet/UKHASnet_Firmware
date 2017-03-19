@@ -6,6 +6,13 @@ This repository contains firmware for creating UKHASnet Sensor Nodes on embedded
 
 To configure the nodes, copy 'NodeConfig-template.h' to 'NodeConfig.h' and fill in the settings for your nodes, this file will be included automatically at compilation.
 
+Instructions
+===
+
+```
+git clone --recursive https://github.com/UKHASnet/UKHASnet_Firmware.git
+```
+
 arduino-repeater
 ======
 
@@ -24,7 +31,7 @@ This is a low-power sensor implementation designed to be used with an ATMega168/
 
 This does not repeat, instead it sleeps inbetween it's own beacons to save battery power. This can run for many months off a single set of cheap AA batteries (7 months so far and counting!).
 
-
-
+Licensing
+=======
 
 All code in this repository is under the MIT License unless stated otherwise. Authors retain their copyright.
