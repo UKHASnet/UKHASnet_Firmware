@@ -17,22 +17,14 @@
 
 #include "nodeconfig.h"
 
-/* Private prototypes */
-float get_batt_voltage(void);
-int16_t gen_data(char *buf);
-void init(void);
 
-/* Global variables local to this compilation unit */
-static float battV = 0.0;
-static uint32_t count = 1, data_interval = 2;
-static uint8_t sequence_id = 'a';
 static char databuf[64];
 
 /**
  * Measure the battery voltage.
  * @returns The voltage of the battery in Volts
  */
-float get_batt_voltage(void)
+static float get_batt_voltage(void)
 {
     uint16_t res;
 
@@ -60,21 +52,22 @@ float get_batt_voltage(void)
     ADCSRA &= ~_BV(ADEN);
     PRR |= _BV(PRADC);
 
+    /* 1.1V / 10bit = 0.001074219 */
     return (float)(res * 0.001074219 * BATTV_SCALEFACTOR * BATTV_FUDGE);
 }
 
-int16_t gen_data(char *buf)
+static int16_t gen_data(char *buf, uint8_t *sequence_id)
 {
     int8_t temp = 0;
 
 #ifdef LOCATION_STRING
-    if(sequence_id=='a' || sequence_id=='z') {
-        sprintf(buf, "%u%cL%s", NUM_REPEATS, sequence_id, LOCATION_STRING);
+    if(*sequence_id=='a' || *sequence_id=='z') {
+        sprintf(buf, "%u%cL%s", NUM_REPEATS, *sequence_id, LOCATION_STRING);
     } else {
-        sprintf(buf, "%u%c", NUM_REPEATS, sequence_id);
+        sprintf(buf, "%u%c", NUM_REPEATS, *sequence_id);
     }
 #else
-    sprintf(buf, "%u%c", NUM_REPEATS, sequence_id);
+    sprintf(buf, "%u%c", NUM_REPEATS, *sequence_id);
 #endif
 
     rf69_read_temp(&temp);
@@ -82,6 +75,7 @@ int16_t gen_data(char *buf)
 
     /* Battery Voltage */
 #if ENABLE_BATTV_SENSOR == 1
+	static float battV = 0.0;
     battV = get_batt_voltage();
     char* battStr;
     char tempStrB[14]; /* make buffer large enough for 7 digits */
@@ -96,34 +90,33 @@ int16_t gen_data(char *buf)
     return sprintf(buf, "%s[%s]", buf, NODE_ID);
 }
 
-void init(void)
+int main(void)
 {
+	uint32_t wakecount = 0;
+	uint32_t next_tx_wakecount;
+	uint32_t tx_wakecount_interval;
     int16_t packet_len;
+	uint8_t sequence_id = 'a';
 
     /* Turn off peripherals that we don't use */
     PRR |= _BV(PRTWI) | _BV(PRTIM2) | _BV(PRTIM1) | _BV(PRTIM0) | _BV(PRUSART0);
 
+    /* Initialise the RFM69 */
     while(rf69_init() != RFM_OK)
         _delay_ms(100);
 
-    packet_len = gen_data(databuf);
+    /* Generate and transmit a packet */
+    packet_len = gen_data(databuf, &sequence_id);
     rf69_send((rfm_reg_t *)databuf, packet_len, RFM_POWER);
-}
 
-int main(void)
-{
-    int16_t packet_len;
+    /* Set transmit interval (rounded up to a multiple of 8s watchdog cycles) */
+    tx_wakecount_interval = (BEACON_INTERVAL / 8) + !!(BEACON_INTERVAL % 8);
 
-    init();
-
-    rf69_set_mode(RFM69_MODE_SLEEP);
-
-    /* Initial data interval = BEACON_INTERVAL since count = 0 */
-    data_interval = BEACON_INTERVAL;
+    /* Set next Transmit time */
+    next_tx_wakecount = wakecount + tx_wakecount_interval;
 
     while(1)
     {
-        count++;
         /* Enable the watchdog and sleep for 8 seconds */
         wdt_enable(WDTO_8S);
         WDTCSR |= (1 << WDIE);
@@ -133,19 +126,23 @@ int main(void)
         sleep_cpu();
         sleep_disable();
 
-        if(count >= data_interval)
+        if(wakecount == next_tx_wakecount)
         {
-            sequence_id++;
-
-            /* Wrap the seqid */
-            if(sequence_id > 'z')
+            /* Increment sequence id */
+            if(sequence_id == 'z')
                 sequence_id = 'b';
+            else
+            	sequence_id++;
 
-            packet_len = gen_data(databuf);
+    		/* Generate and transmit a packet */
+            packet_len = gen_data(databuf, &sequence_id);
             rf69_send((rfm_reg_t *)databuf, packet_len, RFM_POWER);
 
-            data_interval = BEACON_INTERVAL + count;
+            /* Set next Transmit time */
+            next_tx_wakecount = wakecount + tx_wakecount_interval;
         }
+
+        wakecount++;
     }
 
     return 0;
