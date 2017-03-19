@@ -187,14 +187,14 @@ static void _repeat_packet(char *packet_buffer, uint8_t packet_length)
     }
         
     /* Check packet length (including our NODE_ID and a comma) */
-    if((packet_length + sizeof(NODE_ID) + 1) > 64)
+    if((packet_length + strlen(NODE_ID) + 1) > 64)
     {
         /* Repeated packet will be too long, drop it */
         return;
     }
 
     /* Check for our NODE ID */
-    if(memmem(packet_buffer, packet_length, NODE_ID, sizeof(NODE_ID)) != NULL)
+    if(memmem(packet_buffer, packet_length, NODE_ID, strlen(NODE_ID)) != NULL)
     {
         /* We've already handled the packet, drop it */
         return;
@@ -215,7 +215,7 @@ static void _repeat_packet(char *packet_buffer, uint8_t packet_length)
     sprintf((char *)end_bracket, ",%s]", NODE_ID);
 
     /* Update packet length for NODE_ID and comma */
-    packet_length += sizeof(NODE_ID) + 1;
+    packet_length += strlen(NODE_ID) + 1;
 
     /* Random delay to try and avoid packet collision */
     delaytime = getRandBetween(5u, 80u);

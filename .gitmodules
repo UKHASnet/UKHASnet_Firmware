@@ -7,3 +7,6 @@
 [submodule "avr_gateway/ukhasnet-rfm69"]
 	path = avr_gateway/ukhasnet-rfm69
 	url = https://github.com/UKHASnet/ukhasnet-rfm69.git
+[submodule "avr_sensor/ukhasnet-sensors"]
+	path = avr_sensor/ukhasnet-sensors
+	url = https://github.com/UKHASnet/ukhasnet-sensors.git
